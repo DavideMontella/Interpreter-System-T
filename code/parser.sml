@@ -30,7 +30,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
 
 		(* Lexer *)
 
-		fun symbolic(sym) = List.exists (fn x => x = sym) ["(", ")", "[", "]", ",", "+", "-", "*"]
+		fun symbolic(sym) = List.exists (fn x => x = sym) ["(", ")", "[", "]", ","]
 
 		fun lex(accum, this :: (rest : char list)) =
 			if Char.isSpace this then
