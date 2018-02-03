@@ -606,6 +606,7 @@ functor Type(structure List:LISTUTIL
              structure Print: PRINTUTIL) :TYPE =
 struct
   type tyvar = int
+  (*E' il generatore di numeri che identificano le variabili di tipo*)
   val freshTyvar =
       let val r= ref 0 in fn()=>(r:= !r +1; !r) end
   datatype Type = INT
@@ -616,15 +617,17 @@ struct
 
   datatype TypeScheme = FORALL of tyvar list * Type
 
+  (*Prende un Type e restituisce la lista dei numeri interi che rappresentano le variabili di tipo contenute nel Type dato in input.*)
   fun tyvarsTy INT = []
     | tyvarsTy BOOL = []
     | tyvarsTy (LIST ty) = tyvarsTy ty
     | tyvarsTy (ARROW(ty,ty')) = List.union(tyvarsTy ty, tyvarsTy ty')
     | tyvarsTy (TYVAR tyvar) = [tyvar];
 
+  (*Prende in input una lista di variabili di tipo su cui si sta astraendo e restituisce la lista di variabili di tipo ancora libere.*)
   fun tyvarsTySch(FORALL(tyvarlist, ty))= List.minus(tyvarsTy ty, tyvarlist)
 
-
+  
   fun instance(FORALL(tyvars,ty))=
   let val old_to_new_tyvars = map (fn tv=>(tv,freshTyvar())) tyvars
       exception Find;
@@ -787,7 +790,9 @@ functor Expression(structure List: LISTUTIL
          LAMBDAexpr of string * Expression   |
          APPLexpr of Expression * Expression   |
          NUMBERexpr of int
-
+	(*
+		Prende un termine del linguaggio in input e lo restituisce sottoforma di stringa.
+	*)
       fun pr(BOOLexpr true) = " true"
         | pr(BOOLexpr false) = " false"
         | pr(EQexpr p) = printPair "=" p
