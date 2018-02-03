@@ -188,7 +188,7 @@ functor Interpreter
 struct
   val eval= ref true    (* toggle for evaluation *)
   and tc  = ref true    (* toggle for type checking *)
-  fun interpret'(str)=
+  fun interpret(str)=
     let val abstsyn= Parser.parse str
         val (typestr,ok)= 
                      if !tc then 
@@ -202,28 +202,7 @@ struct
              
     in  valuestr ^ " : " ^ typestr 
     end
-    handle Evaluator.Unimplemented => "Evaluator not fully implemented"
-         | TyCh.NotImplemented msg => "Type Checker not fully implemented " ^ msg
-         | Value.Value   => "Run-time error"
-         | Evaluator.RuntimeError msg => "Run-time error: " ^ msg
-         | Parser.Syntax msg => "Syntax Error: " ^ msg
-         | Parser.Lexical msg=> "Lexical Error: " ^ msg
-(*
-  fun interpret(str) = 
-     let val separator = "\n--------------------------------\n"
-         val result = interpret' str
-      in output(std_out, separator);
-         output(std_out, result);
-         output(std_out, separator ^ "\n");
-         ""
-     end
 
-*)
-  fun interpret(str) = 
-     let val separator = "\n--------------------------------\n"
-         val result = interpret' str
-      in separator ^ result ^ separator ^ "\n"
-     end;
 
 end;
 
