@@ -1,53 +1,63 @@
 use "interp.sml";
 
-(*https://stackoverflow.com/questions/4532144/output-is-truncated-with-signs-in-the-repl*)
-Control.Print.printDepth := 1024;
+Control.Print.printDepth := 100;
 
 functor Parser(Expression:EXPRESSION): PARSER =
-   struct
-      structure E = Expression
-      open E
+	struct
+		structure E = Expression
+		open E
+		
+		datatype Token = TokOPENBR   |
+						TokCLOSEBR   |
+						TokTRUE   |
+						TokFALSE   |
+						TokIF   |
+						TokTHEN   |
+						TokELSE   |
+						TokOPENSQ   |
+						TokCLOSESQ   |
+						TokCOMMA   |
+						TokREC   |
+						TokIDENT of string   |
+						TokEQUALS   |
+						TokNIL   |
+						TokCOLCOL   |
+						TokIN   |
+						TokEND   |
+						TokFN   |
+						TokARROW   |
+						TokNUMBER of int
 
-      datatype Token = TokOPENBR   |
-                       TokCLOSEBR   |
-                       TokTRUE   |
-                       TokFALSE   |
-                       TokIF   |
-                       TokTHEN   |
-                       TokELSE   |
-                       TokOPENSQ   |
-                       TokCLOSESQ   |
-                       TokCOMMA   |
-                       TokREC   |
-                       TokIDENT of string   |
-                       TokEQUALS   |
-                       TokNIL   |
-                       TokCOLCOL   |
-                       TokIN   |
-                       TokEND   |
-                       TokFN   |
-                       TokARROW   |
-                       TokNUMBER of int
+		(* Lexer *)
 
-      fun exists f [] = false
-        | exists f (first::rest) = f first orelse exists f rest;
+		fun symbolic(sym) = List.exists (fn x => x = sym) ["(", ")", "[", "]", ",", "+", "-", "*"]
+
+		fun lex(accum, this :: (rest : char list)) =
+			if Char.isSpace this then
+				(if accum = "" then lex("", rest)
+				else accum :: lex("", rest))
+			else if (Char.isAlphaNum (String.sub(accum,0)) <> Char.isAlphaNum this) then
+				(if accum = "" then lex(Char.toString(this), rest)
+				else accum :: lex(Char.toString(this), rest))
+			else if symbolic(Char.toString(this)) orelse symbolic(accum) then
+				(if accum = "" then lex(Char.toString(this), rest)
+				else accum :: lex(Char.toString(this), rest))
+			else lex(accum^Char.toString(this), rest)   |
+			
+			lex(accum, nil) = if accum = "" then [] else [accum]
+	
+		(* end Lexer*)
+
+      exception Lexical of string
       
-      exception Nth
-      fun nth([],n)= raise Nth
-        | nth(first::rest, 0)= first
-        | nth(first::rest,n)= nth(rest,n-1);
+      fun BadLetter(s : char) = (s < #"a" orelse s > #"z")
+      	andalso (s < #"A" orelse s > #"Z")
+      
+      fun IsIdent(s) = not(List.exists BadLetter (explode s))
 
-      fun length [] = 0
-        | length (hd::tl) = 1+ length tl;
-
-      fun IsNumber(s) = not(exists (fn chr : char => chr < #"0" orelse chr > #"9")
+      fun IsNumber(s) = not(List.exists (fn chr : char => chr < #"0" orelse chr > #"9")
                                    (explode s)
                            )
-
-      fun BadLetter(s : char) = (s < #"a" orelse s > #"z")
-                         andalso (s < #"A" orelse s > #"Z")
-
-      fun IsIdent(s) = not(exists BadLetter (explode s))
 
       fun MakeNumber(digits) =
          let fun MakeNumber'(d :: drest, result) =
@@ -55,47 +65,6 @@ functor Parser(Expression:EXPRESSION): PARSER =
                  MakeNumber'(nil, result) = result
          in  MakeNumber'(explode digits, 0)
          end
-
-      fun IsASpace(str) = str <= " "
-
-	  fun IsAlphanum str = 
-	  	case Char.fromString str of
-	  		NONE => false
-	  		| SOME c => 
-             	let val ch = ord c
-             	in  (ch >= ord #"a" andalso ch <= ord #"z")
-             	    orelse (ch >= ord #"A" andalso ch <= ord #"Z")
-             	    orelse (ch >= ord #"0" andalso ch <= ord #"9")
-             	end
-	  			
-(*
-      fun IsAlphanum "" = false
-        | IsAlphanum str =
-             let val ch = ord str
-             in  (ch >= ord #"a" andalso ch <= ord #"z")
-                 orelse (ch >= ord #"A" andalso ch <= ord #"Z")
-                 orelse (ch >= ord #"0" andalso ch <= ord #"9")
-             end
-*)
-      fun Solo(sym) = exists (fn x => x = sym)
-                             ["(", ")", "[", "]", ",", "+", "-", "*"]
-
-      fun Glue(accum, this :: (rest : char list)) =
-             if IsASpace(Char.toString(this)) then
-                (if accum = "" then Glue("", rest)
-                               else accum :: Glue("", rest))
-             else if (IsAlphanum accum <> IsAlphanum (Char.toString(this))) then
-                (if accum = "" then Glue(Char.toString(this), rest)
-                               else accum :: Glue(Char.toString(this), rest))
-             else if Solo(Char.toString(this)) orelse Solo(accum) then
-                (if accum = "" then Glue(Char.toString(this), rest)
-                               else accum :: Glue(Char.toString(this), rest))
-             else Glue(accum^Char.toString(this), rest)   |
-          Glue(accum, nil) = if accum = "" then [] else [accum]
-
-      fun Lex(input) = Glue("", explode input)
-                    
-      exception Lexical of string
 
       fun MakeToken("(") = TokOPENBR   |
           MakeToken(")") = TokCLOSEBR   |
@@ -219,22 +188,13 @@ functor Parser(Expression:EXPRESSION): PARSER =
                      (E, tail) => ([E], tail)
                  )
 
-					(* WhichItem - given the remaining
-					   input tokens, magically find the
-					   actual lexical string which barfed *)
-
-      fun WhichItem(LexStrings, toks: Token list) =
-         nth(rev LexStrings, length(toks) - 1)
-         handle Nth => "<end-of-input>"
-
       exception Syntax of string
 
       fun parse(input) =
-         let val LexStrings = Lex(input)
+         let val LexStrings = lex("", explode input)
          in  (case ParseExpr(map MakeToken LexStrings) of
                  (E, nil) => E   |
                  (_, junk) => syntaxError(junk)
-             ) handle SyntaxError(toks) =>
-                         raise Syntax(WhichItem(LexStrings, toks))
+             ) 
          end
    end;
