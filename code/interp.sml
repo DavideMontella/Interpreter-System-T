@@ -171,6 +171,8 @@ signature TYPECHECKER =
    end;
 
                   (* the interpreter*)
+				  
+(* Un funtore è una sorta di funzione che prende come argomenti delle strutture e le utilizza indipendetemente da come sono state implementate con la sola condizione che abbiano la segnatura aspettata*)
 functor Interpreter
    (structure Ty: TYPE
     structure Value : VALUE
