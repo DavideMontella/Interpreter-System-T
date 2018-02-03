@@ -1,6 +1,4 @@
-(*use "lib.sml";
-  use "interp5.sml";
-  use "parser.sml";*)
+use "parser.sml";
 
 structure List = List()
 and Print = Print();
