@@ -30,7 +30,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
 
 		(* Lexer *)
 
-		fun symbolic(sym) = List.exists (fn x => x = sym) ["(", ")", "[", "]", ",", "+", "-", "*"]
+		fun symbolic(sym) = List.exists (fn x => x = sym) ["(", ")", "[", "]", ","]
 
     (*
       Input: una stringa (accum) e una lista di caratteri (this :: (rest : char list)).
