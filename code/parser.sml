@@ -32,6 +32,24 @@ functor Parser(Expression:EXPRESSION): PARSER =
 
 		fun symbolic(sym) = List.exists (fn x => x = sym) ["(", ")", "[", "]", ",", "+", "-", "*"]
 
+    (*
+      Input: una stringa (accum) e una lista di caratteri (this :: (rest : char list)).
+      Output: lista di caratteri.
+      Casi possibili:
+        - se accum è un whitespace character (space, newline, ...), allora:
+            -> se accum è la stringa vuota, allora richiama lex con argomenti accum e la lista di caratteri senza l'elemento in testa (ovvero 
+               this)
+            -> altrimenti aggiunge accum in testa al risultato della chiamata lex("", rest)
+        - se accum inizia con un carattere alfanumerico e this non è alfanumerico (o viceversa), allora:
+            -> se accum è la stringa vuota, allora richiama lex con argomenti this (convertito a stringa) e rest
+            -> altrimenti aggiunge accum in testa al risultato della chiamata a lex con gli stessi argomenti appena descritti
+        - se this o accum sono simbolici, allora:
+            identico al caso precedente
+        - altrimenti:
+            -> se rest non è la lista vuota, allora chiama lex con argomenti la concatenazione di accum e this e, come secondo argomento, rest
+            -> altrimenti se accum è la stringa vuota, ritorna la lista vuota, altrimenti la lista contenente accum.
+
+    *)
 		fun lex(accum, this :: (rest : char list)) =
 			if Char.isSpace this then
 				(if accum = "" then lex("", rest)
@@ -50,11 +68,24 @@ functor Parser(Expression:EXPRESSION): PARSER =
 
       exception Lexical of string
       
+      (*
+        Input: un carattere (s)
+        Output: booleano
+        Ritorna true se s è non è una lettera, minuscola o maiuscola.
+      *)
       fun BadLetter(s : char) = (s < #"a" orelse s > #"z")
       	andalso (s < #"A" orelse s > #"Z")
       
+      (*
+        Input: una stringa s
+        Output: booleano
+        Ritorna true se s contiene solo lettere (a-z, A-Z)
+      *)
       fun IsIdent(s) = not(List.exists BadLetter (explode s))
 
+      (*
+        
+      *)
       fun IsNumber(s) = not(List.exists (fn chr : char => chr < #"0" orelse chr > #"9")
                                    (explode s)
                            )
@@ -190,6 +221,11 @@ functor Parser(Expression:EXPRESSION): PARSER =
 
       exception Syntax of string
 
+      (*
+        input: stringa
+        output: espressione
+
+      *)
       fun parse(input) =
          let val LexStrings = lex("", explode input)
          in  (case ParseExpr(map MakeToken LexStrings) of
