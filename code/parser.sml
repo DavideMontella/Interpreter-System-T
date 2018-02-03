@@ -1,3 +1,5 @@
+use "interp.sml";
+
 functor Parser(Expression:EXPRESSION): PARSER =
    struct
       structure E = Expression
@@ -39,46 +41,57 @@ functor Parser(Expression:EXPRESSION): PARSER =
       fun length [] = 0
         | length (hd::tl) = 1+ length tl;
 
-      fun IsNumber(s) = not(exists (fn str => str < "0" orelse str > "9")
+      fun IsNumber(s) = not(exists (fn chr : char => chr < #"0" orelse chr > #"9")
                                    (explode s)
                            )
 
-      fun BadLetter(s) = (s < "a" orelse s > "z")
-                         andalso (s < "A" orelse s > "Z")
+      fun BadLetter(s : char) = (s < #"a" orelse s > #"z")
+                         andalso (s < #"A" orelse s > #"Z")
 
       fun IsIdent(s) = not(exists BadLetter (explode s))
 
       fun MakeNumber(digits) =
          let fun MakeNumber'(d :: drest, result) =
-                    MakeNumber'(drest, result * 10 + ord(d) - ord("0"))   |
+                    MakeNumber'(drest, result * 10 + ord(d) - ord(#"0"))   |
                  MakeNumber'(nil, result) = result
          in  MakeNumber'(explode digits, 0)
          end
 
       fun IsASpace(str) = str <= " "
 
+	  fun IsAlphanum str = 
+	  	case Char.fromString str of
+	  		NONE => false
+	  		| SOME c => 
+             	let val ch = ord c
+             	in  (ch >= ord #"a" andalso ch <= ord #"z")
+             	    orelse (ch >= ord #"A" andalso ch <= ord #"Z")
+             	    orelse (ch >= ord #"0" andalso ch <= ord #"9")
+             	end
+	  			
+(*
       fun IsAlphanum "" = false
         | IsAlphanum str =
              let val ch = ord str
-             in  (ch >= ord "a" andalso ch <= ord "z")
-                 orelse (ch >= ord "A" andalso ch <= ord "Z")
-                 orelse (ch >= ord "0" andalso ch <= ord "9")
+             in  (ch >= ord #"a" andalso ch <= ord #"z")
+                 orelse (ch >= ord #"A" andalso ch <= ord #"Z")
+                 orelse (ch >= ord #"0" andalso ch <= ord #"9")
              end
-
+*)
       fun Solo(sym) = exists (fn x => x = sym)
                              ["(", ")", "[", "]", ",", "+", "-", "*"]
 
-      fun Glue(accum, this :: rest) =
-             if IsASpace(this) then
+      fun Glue(accum, this :: (rest : char list)) =
+             if IsASpace(Char.toString(this)) then
                 (if accum = "" then Glue("", rest)
                                else accum :: Glue("", rest))
-             else if (IsAlphanum accum <> IsAlphanum this) then
-                (if accum = "" then Glue(this, rest)
-                               else accum :: Glue(this, rest))
-             else if Solo(this) orelse Solo(accum) then
-                (if accum = "" then Glue(this, rest)
-                               else accum :: Glue(this, rest))
-             else Glue(accum^this, rest)   |
+             else if (IsAlphanum accum <> IsAlphanum (Char.toString(this))) then
+                (if accum = "" then Glue(Char.toString(this), rest)
+                               else accum :: Glue(Char.toString(this), rest))
+             else if Solo(Char.toString(this)) orelse Solo(accum) then
+                (if accum = "" then Glue(Char.toString(this), rest)
+                               else accum :: Glue(Char.toString(this), rest))
+             else Glue(accum^Char.toString(this), rest)   |
           Glue(accum, nil) = if accum = "" then [] else [accum]
 
       fun Lex(input) = Glue("", explode input)
