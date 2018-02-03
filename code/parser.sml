@@ -18,10 +18,6 @@ functor Parser(Expression:EXPRESSION): PARSER =
                        TokOPENSQ   |
                        TokCLOSESQ   |
                        TokCOMMA   |
-                       TokPLUS   |
-                       TokMINUS   |
-                       TokTIMES   |
-                       TokLET   |
                        TokREC   |
                        TokIDENT of string   |
                        TokEQUALS   |
@@ -111,10 +107,6 @@ functor Parser(Expression:EXPRESSION): PARSER =
           MakeToken("[") = TokOPENSQ   |
           MakeToken(",") = TokCOMMA   |
           MakeToken("]") = TokCLOSESQ   |
-          MakeToken("+") = TokPLUS   |
-          MakeToken("-") = TokMINUS   |
-          MakeToken("*") = TokTIMES   |
-          MakeToken("let") = TokLET   |
           MakeToken("rec") = TokREC   |
           MakeToken("=") = TokEQUALS   |
           MakeToken("nil") = TokNIL   |
@@ -176,18 +168,6 @@ functor Parser(Expression:EXPRESSION): PARSER =
                 (_, tail) => syntaxError(tail)
              )   |
 
-          ParseExpr(TokLET :: TokREC :: TokIDENT(ident) :: TokEQUALS :: rest) =
-             (case ParseExpr(rest) of
-                (binding, TokIN :: tail) =>
-                   (case ParseExpr(tail) of
-                       (scope, TokEND :: tail') =>
-                          ParseExprTail(RECDECLexpr(ident, binding, scope),
-                                        tail')   |
-                       (_, tail') => syntaxError(tail')
-                   )   |
-                (_, tail) => syntaxError(tail)
-             )   |
-
           ParseExpr(TokIF :: rest) =
              (case ParseExpr(rest) of
                 (ifpart, TokTHEN :: tail) =>
@@ -210,22 +190,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
 
           ParseExpr(junk) = syntaxError(junk)
 
-          and ParseExprTail(E, TokPLUS :: tail) =
-                 let val (E', tail') = ParseExpr(tail)
-                 in  ParseExprTail(SUMexpr(E, E'), tail')
-                 end   |
-
-              ParseExprTail(E, TokMINUS :: tail) =
-                 let val (E', tail') = ParseExpr(tail)
-                 in  ParseExprTail(DIFFexpr(E, E'), tail')
-                 end   |
-
-              ParseExprTail(E, TokTIMES :: tail) =
-                 let val (E', tail') = ParseExpr(tail)
-                 in  ParseExprTail(PRODexpr(E, E'), tail')
-                 end   |
-
-              ParseExprTail(E, TokEQUALS :: tail) =
+          and ParseExprTail(E, TokEQUALS :: tail) =
                  let val (E', tail') = ParseExpr(tail)
                  in  ParseExprTail(EQexpr(E, E'), tail')
                  end   |

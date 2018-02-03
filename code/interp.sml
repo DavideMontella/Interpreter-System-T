@@ -12,9 +12,6 @@ signature INTERPRETER=
 signature EXPRESSION =
    sig
       datatype Expression =
-         SUMexpr of Expression * Expression   |
-         DIFFexpr of Expression * Expression   |
-         PRODexpr of Expression * Expression   |
          BOOLexpr of bool   |
          EQexpr of Expression * Expression   |
          CONDexpr of Expression * Expression * Expression   |
@@ -250,27 +247,6 @@ functor Evaluator
             case exp
               of BOOLexpr b => mkValueBool b
                | NUMBERexpr i => mkValueNumber i
-               | SUMexpr(e1, e2) =>
-                    let val e1' = evaluate(E, e1)
-                        val e2' = evaluate(E, e2)
-                    in
-                       mkValueNumber(unValueNumber e1' + unValueNumber e2')
-                    end
-
-               | DIFFexpr(e1, e2) =>
-                    let val e1' = evaluate(E, e1)
-                        val e2' = evaluate(E, e2)
-                    in
-                       mkValueNumber(unValueNumber e1' - unValueNumber e2')
-                    end
-
-               | PRODexpr(e1, e2) =>
-                    let val e1' = evaluate(E, e1)
-                        val e2' = evaluate(E, e2)
-                    in
-                       mkValueNumber(unValueNumber e1' * unValueNumber e2')
-                    end
-
                | EQexpr(e1,e2)=> 
                     let val v1 = evaluate(E,e1)
                         val v2 = evaluate(E,e2)
@@ -445,9 +421,6 @@ struct
    (case exp of
       Ex.BOOLexpr b => (Ty.Id,Ty.mkTypeBool(),true)
     | Ex.NUMBERexpr _ => (Ty.Id,Ty.mkTypeInt(),true)
-    | Ex.SUMexpr(e1,e2)  => checkIntBin(TE,e1,e2)
-    | Ex.DIFFexpr(e1,e2) => checkIntBin(TE,e1,e2)
-    | Ex.PRODexpr(e1,e2) => checkIntBin(TE,e1,e2)
     | Ex.LISTexpr [] =>
          let val new = Ty.freshTyvar ()
           in (Ty.Id,Ty.mkTypeList(Ty.mkTypeTyvar  new),true)
@@ -801,9 +774,6 @@ functor Expression(structure List: LISTUTIL
       type 'a pair = 'a * 'a
 
       datatype Expression =
-         SUMexpr of Expression pair   |
-         DIFFexpr of Expression pair   |
-         PRODexpr of Expression pair   |
          BOOLexpr of bool   |
          EQexpr of Expression pair   |
          CONDexpr of Expression * Expression * Expression   |
@@ -816,10 +786,7 @@ functor Expression(structure List: LISTUTIL
          APPLexpr of Expression * Expression   |
          NUMBERexpr of int
 
-      fun pr(SUMexpr p) = printPair "+" p
-        | pr(DIFFexpr p) = printPair "-" p
-        | pr(PRODexpr p) = printPair "*" p
-        | pr(BOOLexpr true) = " true"
+      fun pr(BOOLexpr true) = " true"
         | pr(BOOLexpr false) = " false"
         | pr(EQexpr p) = printPair "=" p
         | pr(CONDexpr(e1,e2,e3))=
