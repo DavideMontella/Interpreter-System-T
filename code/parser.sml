@@ -1,7 +1,17 @@
-use "interp.sml";
+use "lambda.sml";
 use "lexer.sml";
 
 Control.Print.printDepth := 100;
+
+signature PARSER =
+   sig
+      structure E: sig type Expression end
+
+      exception Lexical of string
+      exception Syntax of string
+
+      val parse: string -> E.Expression
+   end
 
 functor Parser(Expression:EXPRESSION): PARSER =
 	struct

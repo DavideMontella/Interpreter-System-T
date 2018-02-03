@@ -1,4 +1,4 @@
-use "parser.sml";
+use "interp.sml";
 
 structure List = List()
 and Print = Print();
