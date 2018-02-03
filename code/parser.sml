@@ -1,5 +1,8 @@
 use "interp.sml";
 
+(*https://stackoverflow.com/questions/4532144/output-is-truncated-with-signs-in-the-repl*)
+Control.Print.printDepth := 1024;
+
 functor Parser(Expression:EXPRESSION): PARSER =
    struct
       structure E = Expression
