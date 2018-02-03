@@ -186,7 +186,7 @@ functor Interpreter
    ): INTERPRETER=
 
 struct
-  val eval= ref true    (* toggle for evaluation *)
+  val eval = ref true    (* toggle for evaluation *)
   and tc  = ref true    (* toggle for type checking *)
   fun interpret(str)=
     let val abstsyn= Parser.parse str

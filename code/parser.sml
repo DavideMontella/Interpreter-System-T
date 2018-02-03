@@ -32,9 +32,6 @@ functor Parser(Expression:EXPRESSION): PARSER =
 
 		exception Lexical of string
 		exception Syntax of string
-
-
-
 	
 		(* Parser *)	
 	
