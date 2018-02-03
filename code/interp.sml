@@ -1,3 +1,5 @@
+use "lib.sml";
+
 signature INTERPRETER=
    sig
       val interpret: string -> string
@@ -25,8 +27,8 @@ signature EXPRESSION =
          APPLexpr of Expression * Expression   |
          NUMBERexpr of int
 
-
-      val prExp: int -> Expression -> string
+(*
+      val prExp: int -> Expression -> string *)
    end;
 
 
@@ -207,7 +209,7 @@ struct
          | Evaluator.RuntimeError msg => "Run-time error: " ^ msg
          | Parser.Syntax msg => "Syntax Error: " ^ msg
          | Parser.Lexical msg=> "Lexical Error: " ^ msg
-
+(*
   fun interpret(str) = 
      let val separator = "\n--------------------------------\n"
          val result = interpret' str
@@ -216,6 +218,14 @@ struct
          output(std_out, separator ^ "\n");
          ""
      end
+
+*)
+  fun interpret(str) = 
+     let val separator = "\n--------------------------------\n"
+         val result = interpret' str
+      in separator ^ result ^ separator ^ "\n"
+     end;
+
 end;
 
                     (* the evaluator *)
@@ -394,12 +404,12 @@ struct
                     handle List.Lookup => raise Recovery(i)
           val sep = "\n----------------\n"
           val freshty = Ty.mkTypeTyvar (Ty.freshTyvar())
-          val msg   = "Type Error in expression:\n   " ^ Ex.prExp 60 exp ^
+          val msg   = "Type Error in expression:\n   " ^ 
                       "\nClue: " ^  msgf stringlist ^ "\n"
-
-       in 
-          output(std_out, sep);
-          output(std_out, msg);
+  (*        val msg   = "Type Error in expression:\n   " ^ Ex.prExp 60 exp ^
+                      "\nClue: " ^  msgf stringlist ^ "\n"
+*)
+       in sep ^ "\n" ^ msg;
           (S,freshty,false)
       end
 end;
@@ -833,7 +843,7 @@ functor Expression(structure List: LISTUTIL
       and prList' [] = ""
         | prList' [e] = pr e
         | prList'(hd::tl)= pr hd ^ "," ^ prList' tl
-
+(*
 
       fun prExp n e =
           let val s = pr e
@@ -846,7 +856,7 @@ functor Expression(structure List: LISTUTIL
                      val final = rev(List.prefix(rev slist,half))
                   in implode(initial @ (explode "...") @ final)
                  end
-          end
+          end *)
    end;
 
 

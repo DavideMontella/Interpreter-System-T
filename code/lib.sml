@@ -61,7 +61,7 @@ struct
           (if i<0 then " -" else "")^ natToString (abs i)
   and natToString(n:int)=
       let val d = n div 10 in
-        if d = 0 then chr(ord"0" + n)
-        else natToString(d)^ chr(ord"0" + (n mod 10))
+        if d = 0 then intToString(ord #"0" + n)
+        else natToString(d)^ intToString(ord #"0" + (n mod 10))
       end
 end;
