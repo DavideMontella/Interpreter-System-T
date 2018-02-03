@@ -30,6 +30,11 @@ functor Parser(Expression:EXPRESSION): PARSER =
 
 		(* Lexer *)
 
+    (*
+      Input: un carattere (sym)
+      Output: booleano
+      Restituisce true se sym è un carattere simbolico tra quelli definiti qui sotto, altrimenti false.
+    *)
 		fun symbolic(sym) = List.exists (fn x => x = sym) ["(", ")", "[", "]", ","]
 
     (*
@@ -71,7 +76,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
       (*
         Input: un carattere (s)
         Output: booleano
-        Ritorna true se s è non è una lettera, minuscola o maiuscola.
+        Ritorna true se s non è una lettera, nè minuscola nè maiuscola, altrimenti false.
       *)
       fun BadLetter(s : char) = (s < #"a" orelse s > #"z")
       	andalso (s < #"A" orelse s > #"Z")
@@ -79,17 +84,25 @@ functor Parser(Expression:EXPRESSION): PARSER =
       (*
         Input: una stringa s
         Output: booleano
-        Ritorna true se s contiene solo lettere (a-z, A-Z)
+        Ritorna true se s contiene solo lettere (a-z, A-Z), altrimenti false.
       *)
       fun IsIdent(s) = not(List.exists BadLetter (explode s))
 
       (*
-        
+        Input: una stringa s
+        Output: booleano
+        Ritorna true se s rappresenta un numero, altrimenti false.
       *)
       fun IsNumber(s) = not(List.exists (fn chr : char => chr < #"0" orelse chr > #"9")
                                    (explode s)
                            )
 
+      (*
+        Input: una stringa (digits)
+        Output: intero
+        Chiama ricorsivamente MakeNumber sulla lista di caratteri che compongono digits. 
+        Ad ogni chiamata toglie un elemento dalla testa di digits e lo inserisce con la rispettiva potenza di 10 nel numero che costruisce.
+      *)
       fun MakeNumber(digits) =
          let fun MakeNumber'(d :: drest, result) =
                     MakeNumber'(drest, result * 10 + ord(d) - ord(#"0"))   |
@@ -97,6 +110,10 @@ functor Parser(Expression:EXPRESSION): PARSER =
          in  MakeNumber'(explode digits, 0)
          end
 
+
+      (*
+        Come dice il nome, crea un token. Da notare TokNUMBER di tipo int e TokIDENT di tipo string.
+      *)
       fun MakeToken("(") = TokOPENBR   |
           MakeToken(")") = TokCLOSEBR   |
           MakeToken("true") = TokTRUE   |
@@ -124,6 +141,9 @@ functor Parser(Expression:EXPRESSION): PARSER =
 
       fun syntaxError(x) = raise SyntaxError(x)
 
+      (*
+
+      *)
       fun ParseExpr(TokOPENBR :: rest): Expression * Token list =
              (case ParseExpr(rest) of
                  (E, TokCLOSEBR :: tail) => ParseExprTail(E, tail)   |
