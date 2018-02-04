@@ -10,7 +10,21 @@ signature INTERPRETER=
    end;
 
 				  
-(* Un funtore è una sorta di funzione che prende come argomenti delle strutture e le utilizza indipendetemente da come sono state implementate con la sola condizione che abbiano la segnatura aspettata*)
+(* Un funtore è una sorta di funzione che prende come argomenti delle strutture e le utilizza indipendetemente 
+da come sono state implementate con la sola condizione che abbiano la segnatura aspettata
+	- interp, chiama in sequenza
+		- parse per fare il parsing della stringa
+		- typecheck per fare il typechecking della Expression ottenuta dal parser, ritorna il tipo ty e
+			un booleano ok, settato a true se il typecheck è andato a buon fine
+		- prType dovrebbe convertire il tipo ty in una stringa che corrisponde al tipaggio in sml,
+			ex. quindi se il nostro termine è di tipo INT, lo converte in una stringa "int"
+		- se il termine è tipabile (quindi ok è true), allora chiama evaluate sull'Expression ottenuta dal
+			parser
+		- printValue lo stampa 
+		
+		quindi la funzione ritorna la stringa ottenuta da prValue e la stringa ottenuta da prType
+			
+*)
 functor Interpreter
    (structure Ty: TYPE
     structure Value : VALUE
