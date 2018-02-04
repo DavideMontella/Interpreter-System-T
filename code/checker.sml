@@ -168,6 +168,7 @@ end;
 
 *)
 
+
 functor TypeChecker
   (structure Ex: EXPRESSION
    structure Ty: TYPE
