@@ -320,6 +320,13 @@ struct
    val op on = Ty.on
    infix oo
    val op oo = Ty.oo
+   (*
+	  Prende in input una variabile di tipo tv e un tipo t. Esegue i seguenti passi:
+	  - Controlla se t è di tipo int o bool. Se il controllo non porta ad errori allora vuol dire che tv non può essere contenuta in t e torna false. Altrimenti prosegue;
+	  - Controlla se t è una variabile di tipo. Se lo è allora ritorna il risultato booleano dell'uguaglianza tra esso e tv. Altrimenti prosegue;
+	  - Controlla se è una lista di tipo. Controlla ricorsivamente se nel tipo di t occorre tv. Altrimenti prosegue;
+	  - Controlla se t è una tipo freccia. Se lo è allora ricorsivamente controllerà se tv occorre nell'variabili su cui si astrae o in quelle contenute nel corpo. Altrimenti ritorna un eccezione.	 
+   *)
    fun occurs(tv:Ty.tyvar,t:Ty.Type):bool=
      (Ty.unTypeInt t; false)              handle Ty.Type=>
      (Ty.unTypeBool t; false)             handle Ty.Type=>
@@ -334,7 +341,15 @@ struct
      end                                  handle Ty.Type=>
    raise NotImplemented "(the occur check)"
 
-
+   (*
+	  Prende in input due tipi t,t' e restituisce una sostituzione. Questa sostituzione la crea eseguendo i seguenti passi:
+	  - Verifica se t e t' sono due variabili di tipo. Se è cosi allora ritorna una sostituzione che prende il numero identificativo di t e ritorna t'. Se invece t' non è una variabile di tipo e invece t si si và a controllare se tv occorre in t'. Se non è cosi allora costruisco la sostituzione che va da dall'identificatore di t in t'. Altrimenti prosegue;
+	  - Verifica se t' è un 
+	  ....
+	  ....
+	  ....
+	  In parole povere prende i due tipi t,t' in input e restituisce una sostituzione tal eche S(t) = S(t').
+   *)
    fun unify(t,t')=
    let val tv = Ty.unTypeTyvar t
     in let val tv' = Ty.unTypeTyvar t'
