@@ -369,9 +369,13 @@ functor Type(structure List:LISTUTIL
              structure Print: PRINTUTIL) :TYPE =
 struct
   type tyvar = int
-  (*E' il generatore di numeri che identificano le variabili di tipo*)
+  (*E' un generatore di numeri interi. Esso viene utilizzato dalla nostra struttura per creare varibili di tipo. Queste variabili di tipo saranno identificate da un numero intero.*)
   val freshTyvar =
       let val r= ref 0 in fn()=>(r:= !r +1; !r) end
+	  
+  (*
+	Il seguente datatype rappresenta i nostri tipi. Questi tipi 
+  *)
   datatype Type = INT
                 | BOOL
                 | LIST of Type
@@ -380,17 +384,22 @@ struct
 
   datatype TypeScheme = FORALL of tyvar list * Type
 
-  (*Prende un Type e restituisce la lista dei numeri interi che rappresentano le variabili di tipo contenute nel Type dato in input.*)
+  (*Prende un Type t e restituisce la lista di variabili di tipo contenute in t. Ovviamente dato che le nostre variabili di tipo sono identificate da numeri interi essa sarà una lista di numeri interi.*)
   fun tyvarsTy INT = []
     | tyvarsTy BOOL = []
     | tyvarsTy (LIST ty) = tyvarsTy ty
     | tyvarsTy (ARROW(ty,ty')) = List.union(tyvarsTy ty, tyvarsTy ty')
     | tyvarsTy (TYVAR tyvar) = [tyvar];
 
-  (*Prende in input una lista di variabili di tipo su cui si sta astraendo e restituisce la lista di variabili di tipo ancora libere.*)
+  (*
+	Prende in input un tipo FORALL comprese le variabili di tipo su cui di astra e le variabili libere nel corpo. Restituisce la lista di variabili di tipo libere nel corpo su cui non si sta astraendo.
+  *)
   fun tyvarsTySch(FORALL(tyvarlist, ty))= List.minus(tyvarsTy ty, tyvarlist)
 
-  
+  (*
+    Prende un TypeScheme e ritorna un Type. Esegue i seguenti passi:
+	- Per prima cosa crea una variabile old_to_new_tyvars non è altro che la lista tyvars .  
+  *)
   fun instance(FORALL(tyvars,ty))=
   let val old_to_new_tyvars = map (fn tv=>(tv,freshTyvar())) tyvars
       exception Find;
