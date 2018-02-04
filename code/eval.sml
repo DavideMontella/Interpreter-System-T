@@ -61,8 +61,16 @@ signature EVALUATOR =
 			- ## let, da verificare
 			- ## rec, da verificare
 			- variabile, valuta la variabile nell'ambiente associato
-			- applicazione, valuta entrambe le espressioni, "spacchetta" la prima espressione, che deve essere
-				una chiusura, quindi 
+			- applicazione:
+				- valuta entrambe le espressioni
+				- "spacchetta" la prima espressione, che deve essere una chiusura (id, exp, env1, env2), 
+					quindi ...
+				
+				- aggiunge la coppia (id, valore della seconda espressione) nell'ambiente
+				- valuta exp nel nuovo ambiente
+				
+			- astrazione, argomento e, corpo exp, nell'ambiente E, crea una chiusura, quadrupla
+				(e, exp, E, E') , dove E' è un ambiente vuoto ...
 			
 				
 		
@@ -179,6 +187,10 @@ functor Value(structure Env: ENVIRONMENT
       fun unValueBool(BOOLvalue(b)) = b   |
           unValueBool(_) = raise Value
 
+		(*
+		
+			####### eliminabili 
+		*)
       fun unValueHead(CONSvalue(c, _)) = c   |
           unValueHead(_) = raise Value
 
@@ -191,20 +203,23 @@ functor Value(structure Env: ENVIRONMENT
       fun unEnv(ENV e) = e
         
      
+     (*
+     	esegue il confronto di uguaglianza su coppie:
+     		- interi
+     		- booleani
+     		- liste vuote
+     		- concatenazioni, confrontando gli elementi con stessa posizione nelle due concatenazioni 
+     		- altrimenti non sono confrontabili, quindi false
+     *)
+     
       exception EqValue
 
       fun eqValue(NUMBERvalue v,NUMBERvalue v') = v=v' |
           eqValue(BOOLvalue v, BOOLvalue v') = v=v' |
           eqValue(NILvalue,NILvalue) = true |
           eqValue(CONSvalue(v1,v2),CONSvalue(v1',v2'))= 
-             eqValue(v1,v1') andalso eqValue(v2,v2') |
+          eqValue(v1,v1') andalso eqValue(v2,v2') |
           eqValue (_,_) = false
-          
-
-          
-                 
-
-      (* unfolding of environments for recursion*)
 
       fun Rec(E as (ENV env))=
           let fun unfold(CLOS(id',exp',E',E'')) = CLOS(id',exp',E',E)
@@ -212,7 +227,10 @@ functor Value(structure Env: ENVIRONMENT
            in ENV(Env.map unfold env)
           end
           
-
+		(*
+			Converte i valori in stringhe
+			- ######## la chiusura è incasinata e non so perchè
+		*)
 
 				(* Pretty-printing *)
       fun printValue(NUMBERvalue(i)) = " " ^ Print.intToString(i)   |
