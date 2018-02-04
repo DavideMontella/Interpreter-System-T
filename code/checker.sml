@@ -450,6 +450,9 @@ struct
   type subst = Type -> Type
 
   fun Id x = x
+  (*
+    Prende in input due variabili di tipo e restituisce una funzione che mappa la prima variabile di tipo con la seconda variabile di tipo.
+  *)
   fun mkSubst(tv,ty)=
      let fun su(TYVAR tv')= if tv=tv' then ty else TYVAR tv'
          |   su(INT) = INT
@@ -459,9 +462,15 @@ struct
       in su
      end
 
-
+  
   fun on(S,t)= S(t)
   infixr on
+  
+  (*
+	 Prende in input una funzione S e un tipo FORALL. Dopodichè esegue i seguenti passi:
+	 - Crea una variabile fv che contiene la lista di variabili di tipo in ty.
+	 - Crea una variabile fvrange 
+  *)
   fun onScheme(S,FORALL(bounds,ty)) = 
       let val fv = tyvarsTy ty
           val fvrange= 
