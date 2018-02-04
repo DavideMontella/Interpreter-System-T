@@ -46,8 +46,18 @@ functor Parser(Expression:EXPRESSION): PARSER =
 	
 		(* Parser *)	
 	
+    (*
+      Input: una stringa (s)
+      Output: un booleano
+      Restituisce true se s è composta da sole lettere, minuscole o maiuscole, altrimenti false.
+    *)
 		fun IsIdent(s) = not(List.exists (not o Char.isAlpha) (explode s))
 
+    (*
+      Input: stringa (s)
+      Output: booleano
+      Restituisce true se s è composta da soli numeri, altrimenti false.
+    *)
 		fun IsNumber(s) = not(List.exists (not o Char.isDigit) (explode s))
 
 		fun MakeToken("(") = TokOPENBR
@@ -77,10 +87,30 @@ functor Parser(Expression:EXPRESSION): PARSER =
 		(*
 			ParseExpr effettua il parsing della token list, quindi scandisce la lista di token dalla testa 
 			alla coda
-			- Parentesi aperta:
-				chiama ParseExpr sul resto della token list
+			- Parentesi tonda aperta:
+				chiama ParseExpr sul resto della token list:
+          -> se incontra una parentesi tonda chiusa (eventualmente ci sono altre chiamate a funzione prima di entrare in questo caso), allora 
+             chiama ParseExprTail con argomenti un'espressione E e il resto della token list.
+          -> altrimenti non c'è niente dopo la parentesi aperta, quindi alza un'eccezione.
+      - I casi number, nil, true, ident e opensq immediatamente seguito da colsesq sono semplici.
+      - Parentesi quadra aperta (opensq):
+        chiama ParseList sul resto della token list:
+          -> se incontra una parentesi quadra chiusa (come nel caso della tonda, possono esserci altre chiamate), allora chiama ParseExprTail
+             con argomenti la lista delle espressioni Es e il resto della lista dei token.
+          -> altrimenti non c'è niente dopo la parentesi aperta, quindi alza un'eccezione.
+      - Let formattato correttamente (seguito da nome di variabile, uguale e resto della lista dei token):
+        Chiama ParseExpr sul resto della lista dei token:
+          -> se incontra un in, allora richiama come al solito ParseExpr sul resto della lista dei token, altrimenti alza un'eccezione.
+          -> se incontra un end (come sempre, possono esserci altre chiamate a funzione), allora chiama ParseExpreTail con argomenti il nome 
+             della variabile (ident) seguito dalle due espressioni (binding e scope) e il resto della lista dei token, altrimenti alza 
+             un'eccezione.
+          -> altrimenti il let non è correttamente formattato, quindi alza un'eccezione.
+      - If:
+        chiama parseExpr sul resto della lista dei token. Il modo di operare è lo stesso dei casi precedenti, controlla che gli annidamenti siano rispettati. In particolare il caso della lettura del token else porta alla chiamata di ParseExprTail con argomenti l'espressione a sua volta costituita dalla terna di espressioni l'if-then-else ed il resto della lista di token, come secondo arogmento. Da notare che il then è obbligatorio, altrimenti viene alzata un'eccezione, mentre l'else non lo è.
+      - Fn:
+        Deve essere correttamente formattato (come fn x => M). Ident rappresenta il nome del parametro, x nel nostro esempio, mentre body (vedere il codice qui sotto) rappresenta l'espressione che segue la freccia =>. Viene richiamata ParseExprTail con argomenti l'espressione costituita da x ed M (nel nostro esempio) ed il resto della lista dei token.
+      - Altrimenti, alza un'eccezione (junk).
 		*)
-
 		fun ParseExpr(TokOPENBR :: rest): Expression * Token list =
 				(case ParseExpr(rest) of
 					(E, TokCLOSEBR :: tail) => ParseExprTail(E, tail)
@@ -128,44 +158,45 @@ functor Parser(Expression:EXPRESSION): PARSER =
 					| (_, tail) => raise SyntaxError(tail)
 				)   
              
-             | ParseExpr(TokFN :: TokIDENT(ident) :: TokARROW :: rest) =
-             	let val (body, tail) = ParseExpr(rest)
-             	in  ParseExprTail(LAMBDAexpr(ident, body), tail)
-             	end
-             
-             | ParseExpr(junk) = raise SyntaxError(junk)
-             
-             (*
-             
-             *)
+       | ParseExpr(TokFN :: TokIDENT(ident) :: TokARROW :: rest) =
+       	let val (body, tail) = ParseExpr(rest)
+       	in  ParseExprTail(LAMBDAexpr(ident, body), tail)
+       	end
+       
+       | ParseExpr(junk) = raise SyntaxError(junk)
+       
 
-             and ParseExprTail(E, TokEQUALS :: tail) =
-             	let val (E', tail') = ParseExpr(tail)
-             	in  ParseExprTail(EQexpr(E, E'), tail')
-             	end
-             	
-             | ParseExprTail(E, TokCOLCOL :: tail) =
-             	let val (E', tail') = ParseExpr(tail)
-             	in  ParseExprTail(CONSexpr(E, E'), tail')
-             	end
-             
-             | ParseExprTail(E, TokOPENBR :: rest) =
-             	(case ParseExpr(rest) of
-             		(E', TokCLOSEBR :: tail) => ParseExprTail(APPLexpr(E, E'), tail)
-             		| (_, tail) => raise SyntaxError(tail)
-             	)
-             
-             | ParseExprTail(E, tail) = (E, tail)
-             
-             
-             and ParseList(tokens) =
-             	(case ParseExpr(tokens) of
-             		(E, TokCOMMA :: rest) =>
-             			let val (E', tail) = ParseList(rest)
-             			in  (E :: E', tail)
-             			end
-             		| (E, tail) => ([E], tail)
-             	)
+       (*
+          Input: un'espressione (E) e una lista di token
+          Output: 
+       *)
+       and ParseExprTail(E, TokEQUALS :: tail) =
+       	let val (E', tail') = ParseExpr(tail)
+       	in  ParseExprTail(EQexpr(E, E'), tail')
+       	end
+       	
+       | ParseExprTail(E, TokCOLCOL :: tail) =
+       	let val (E', tail') = ParseExpr(tail)
+       	in  ParseExprTail(CONSexpr(E, E'), tail')
+       	end
+       
+       | ParseExprTail(E, TokOPENBR :: rest) =
+       	(case ParseExpr(rest) of
+       		(E', TokCLOSEBR :: tail) => ParseExprTail(APPLexpr(E, E'), tail)
+       		| (_, tail) => raise SyntaxError(tail)
+       	)
+       
+       | ParseExprTail(E, tail) = (E, tail)
+       
+       
+       and ParseList(tokens) =
+       	(case ParseExpr(tokens) of
+       		(E, TokCOMMA :: rest) =>
+       			let val (E', tail) = ParseList(rest)
+       			in  (E :: E', tail)
+       			end
+       		| (E, tail) => ([E], tail)
+       	)
 
 		(*
 			- riceve una stringa in input
@@ -175,7 +206,6 @@ functor Parser(Expression:EXPRESSION): PARSER =
 				- se la lista è vuota, allora ritorna l'expression
 				- altrimenti lancia un'eccezione
  		*)
-
 		fun parse(input) =
 			let val LexStrings = Lexer.lex("", explode input)
 			in  (case ParseExpr(map MakeToken LexStrings) of
