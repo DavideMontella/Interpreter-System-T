@@ -139,7 +139,9 @@ struct
 
 
 ]
-
+  (*
+    
+  *)
   fun report(exp, i, S, stringlist) =
       let val msgf = List.lookup messages i
                     handle List.Lookup => raise Recovery(i)
@@ -147,9 +149,11 @@ struct
           val freshty = Ty.mkTypeTyvar (Ty.freshTyvar())
           val msg   = "Type Error in expression:\n   " ^ 
                       "\nClue: " ^  msgf stringlist ^ "\n"
+
   (*        val msg   = "Type Error in expression:\n   " ^ Ex.prExp 60 exp ^
                       "\nClue: " ^  msgf stringlist ^ "\n"
 *)
+
        in sep ^ "\n" ^ msg;
           (S,freshty,false)
       end
