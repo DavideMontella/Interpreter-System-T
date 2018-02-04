@@ -35,6 +35,8 @@ functor Parser(Expression:EXPRESSION): PARSER =
 						TokEQUALS   |
 						TokNIL   |
 						TokCOLCOL   |
+						TokIN   |
+						TokEND   |
 						TokFN   |
 						TokARROW   |
 						TokNUMBER of int
@@ -72,6 +74,8 @@ functor Parser(Expression:EXPRESSION): PARSER =
 			| MakeToken("=") = TokEQUALS
 			| MakeToken("nil") = TokNIL
 			| MakeToken("::") = TokCOLCOL
+			| MakeToken("in") = TokIN
+			| MakeToken("end") = TokEND
 			| MakeToken("fn") = TokFN
 			| MakeToken("=>") = TokARROW
 			| MakeToken(s) = if IsNumber(s) then TokNUMBER(valOf (Int.fromString(s)))
@@ -130,6 +134,16 @@ functor Parser(Expression:EXPRESSION): PARSER =
 					(Es, TokCLOSESQ :: tail) => ParseExprTail(LISTexpr(Es), tail)
 					| (_, tail) => raise SyntaxError(tail)
 				)   
+			
+			| ParseExpr(TokLET :: TokIDENT(ident) :: TokEQUALS :: rest) =
+				(case ParseExpr(rest) of
+					(binding, TokIN :: tail) =>
+						(case ParseExpr(tail) of
+							(scope, TokEND :: tail') => ParseExprTail(DECLexpr(ident, binding, scope), tail')
+							| (_, tail') => raise SyntaxError(tail')
+						)
+					| (_, tail) => raise SyntaxError(tail)
+				)
 			
 			| ParseExpr(TokIF :: rest) =
 				(case ParseExpr(rest) of
