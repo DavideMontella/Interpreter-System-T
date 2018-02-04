@@ -40,8 +40,21 @@ signature EVALUATOR =
       exception RuntimeError of string
       val evaluate: Exp.Expression -> Val.Value
    end;
-
-                    (* the evaluator *)
+                    
+(*
+	funtore che ritorna l'evaluator, prende le strutture dei valori, degli ambienti e delle espressioni
+		- ha una sola funzione evaluate che prende un'espressione e ritorna un valore
+			- questa chiama una funzione locale evaluate con argomenti l'espressione e un ambiente vuoto
+		- la funzione locale evaluate, funziona per casi su tutte le possibili espressioni
+			- casi base:
+				- espressioni booleane e intere, ritornano risprettivamente NUMBERvalue e BOOLvalue, chiamando
+					rispettivamente mkValueNumber e mkValueBool
+			- uguaglianza, quindi coppia di espressioni, le valuta entrambe, chiama eqValue, 
+				per effettuare il confronto dei valori ottenuti, e costruisce il BOOLvalue corrispondente
+				
+		
+*)                    
+                    
 functor Evaluator
   (structure Expression: EXPRESSION
    structure Env: ENVIRONMENT
