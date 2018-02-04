@@ -1,5 +1,24 @@
 use "./libs/lib.sml";
 
+(*
+	le espressioni del nostro linguaggio sono
+		- booleani
+		- interi
+		- uguaglianze su due espressioni, da capire se utile oltre al let, oppure come assegnamento
+		- concatenazioni, rappresentate da coppie, cioè la prima espressione concatenata alla seconda, 
+			che a sua volta	puo essere una concatenazione o una lista o un altro termine, l'espressione può 
+			essere eterogenea, ma poi non è tipabile
+		- lista, è una lista di espressioni, eterogenea (in questo caso poi non sarebbe comunque tipabile),
+			che dall'evaluator poi viene converita in una sequenza di concatenazioni
+		- ## il let, da capire se serve
+		- ## la dichiarazione di rec, da sistemare
+		- identificatori, cioè stringhe
+		- lambda astrazioni, cioè stringa, argomento dell'astrazione, e espressione corpo dell'astrazione
+		- applicazioni, coppia di espressioni
+		
+		prExp, converte una espressione in una stringa del nostro linguaggio
+*)
+
 signature EXPRESSION =
    sig
       datatype Expression =
@@ -15,8 +34,8 @@ signature EXPRESSION =
          APPLexpr of Expression * Expression   |
          NUMBERexpr of int
 
-(*
-      val prExp: int -> Expression -> string *)
+
+      val prExp: int -> Expression -> string 
    end;
    
 signature ENVIRONMENT =
@@ -81,12 +100,12 @@ functor Expression(structure List: LISTUTIL
       and prList' [] = ""
         | prList' [e] = pr e
         | prList'(hd::tl)= pr hd ^ "," ^ prList' tl
-(*
+
 
       fun prExp n e =
           let val s = pr e
-              val Size = size s
-           in if Size <= n then s
+              val ze = size s
+           in if ze <= n then s
               else
                  let val slist = explode s
                      val half = (n-3)div 2
@@ -94,7 +113,7 @@ functor Expression(structure List: LISTUTIL
                      val final = rev(List.prefix(rev slist,half))
                   in implode(initial @ (explode "...") @ final)
                  end
-          end *)
+          end
    end;
 
 functor Environment():ENVIRONMENT =
