@@ -340,7 +340,15 @@ struct
      end                                  handle Ty.Type=>
    raise NotImplemented "(the occur check)"
 
-
+   (*
+	  Prende in input due tipi t,t' e restituisce una sostituzione. Questa sostituzione la crea eseguendo i seguenti passi:
+	  - Verifica se t e t' sono due variabili di tipo. Se è cosi allora ritorna una sostituzione che prende il numero identificativo di t e ritorna t'. Se invece t' non è una variabile di tipo e invece t si si và a controllare se tv occorre in t'. Se non è cosi allora costruisco la sostituzione che va da dall'identificatore di t in t'. Altrimenti prosegue;
+	  - Verifica se t' è un 
+	  ....
+	  ....
+	  ....
+	  In parole povere prende i due tipi t,t' in input e restituisce una sostituzione tal eche S(t) = S(t').
+   *)
    fun unify(t,t')=
    let val tv = Ty.unTypeTyvar t
     in let val tv' = Ty.unTypeTyvar t'
