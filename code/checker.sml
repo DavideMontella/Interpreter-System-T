@@ -155,7 +155,18 @@ struct
       end
 end;
 
+(*
+	funtore che ritorna il typechecker
+	- typecheck, è l'unica funzione utilizzata dall'esterno, che prende un espressione 
+		- utilizzata esclusivamente per chiamare tc, con argomenti l'Expression corrispondente al termine
+			parsato e contesto dei tipi vuoto
+		- ritorna una coppia: il tipo del termine e un booleano che indica se il termine è tipabile o meno
+	- tc, effettua il typechecking su un espressione, lavora per casi
+		- casi base:
+			- Booleani e interi, rispettivamente ritornano tipi primiti BOOL e INT ottenuti chiamando
+				mkTypeBoole mkTypeInt
 
+*)
 
 functor TypeChecker
   (structure Ex: EXPRESSION
@@ -289,14 +300,6 @@ struct
                    raise Recover(e2, 7, (S2 oo S1' oo S1), [Ty.prType t2])
      in (S2' oo S2 oo S1' oo S1, Ty.mkTypeInt(), ok1 andalso ok2)
     end handle Recover q=> Recovery.report q);
-
-	(*
-		unica funzione pubblica del typechecker
-			- utilizzata esclusivamente per chiamare tc, con argomenti l'Expression corrispondente al termine
-				parsato e contesto dei tipi vuoto
-			
-			ritorna una coppia: il tipo del termine e un booleano che indica se il termine è tipabile o meno
-	*)
 
   fun typecheck(e) = let val (_,ty,ok) =
                           tc(TyEnv.emptyEnv,e)
