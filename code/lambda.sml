@@ -1,4 +1,4 @@
-use "./libs/lib.sml";
+use "lib.sml";
 
 (*
 	le espressioni del nostro linguaggio sono
@@ -56,8 +56,7 @@ signature ENVIRONMENT =
 
    end;   
 
-functor Expression(structure List: LISTUTIL
-                   structure Print: PRINTUTIL): EXPRESSION =
+functor Expression(structure List: LISTUTIL): EXPRESSION =
    struct
       type 'a pair = 'a * 'a
 
@@ -93,7 +92,7 @@ functor Expression(structure List: LISTUTIL
         | pr(IDENTexpr f)= " " ^ f
         | pr(LAMBDAexpr(x,e))= " fn " ^ x ^ "=>" ^ pr(e)
         | pr(APPLexpr(e1,e2))= pr e1 ^ pr e2
-        | pr(NUMBERexpr i)= " " ^ Print.intToString i
+        | pr(NUMBERexpr i)= " " ^ Int.toString(i)
       and printPair operator (e1,e2) = pr e1 ^ " " ^ operator ^
             pr e2
       and prList l = "[" ^ prList' l ^ "]"

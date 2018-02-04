@@ -66,22 +66,3 @@ struct
     | prefix((hd::tl),n)= hd::prefix(tl,n-1)
 end;
 
-
-signature PRINTUTIL =
-sig
-  val intToString: int -> string
-  val natToString: int -> string
-end;
-
-functor Print():PRINTUTIL=
-struct
-  
-  (*Prende in input un intero. Restituisce tale intero in stringa*)
-  fun intToString(i:int)=  
-          (if i<0 then " -" else "")^ natToString (abs i)
-  and natToString(n:int)=
-      let val d = n div 10 in
-        if d = 0 then intToString(ord #"0" + n)
-        else natToString(d)^ intToString(ord #"0" + (n mod 10))
-      end
-end;

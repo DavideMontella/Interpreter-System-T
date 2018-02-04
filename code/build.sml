@@ -1,19 +1,16 @@
 use "interp.sml";
 
-structure List = List()
-and Print = Print();
+structure List = List();
 
 structure Expression= 
-  Expression(structure Print= Print
-             structure List = List);
+  Expression(structure List = List);
 
 structure Parser= Parser(Expression);
 
 structure Env = Environment();
 
 structure Value = Value(structure Env= Env
-                        structure Exp = Expression
-                        structure Print= Print);
+                        structure Exp = Expression);
 
 structure Evaluator= 
    Evaluator(structure Expression= Expression
@@ -22,8 +19,7 @@ structure Evaluator=
 
 
 
-structure Ty = Type(structure List = List
-                    structure Print = Print); 
+structure Ty = Type(structure List = List); 
 
 structure Unify = Unify(Ty);
 

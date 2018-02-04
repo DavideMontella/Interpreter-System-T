@@ -391,8 +391,7 @@ end; (*Unify*)
                      (* the basics -- nullary functors *)
 
 
-functor Type(structure List:LISTUTIL
-             structure Print: PRINTUTIL) :TYPE =
+functor Type(structure List:LISTUTIL) :TYPE =
 struct
   type tyvar = int
   (*E' un generatore di numeri interi. Esso viene utilizzato dalla nostra struttura per creare varibili di tipo. Queste variabili di tipo saranno identificate da un numero intero.*)
@@ -537,7 +536,7 @@ struct
   |   prType BOOL= "bool"
   |   prType (LIST ty) = "(" ^ prType ty ^ ")list"
   |   prType (ARROW(ty,ty'))= "(" ^ prType ty ^ "->" ^ prType ty' ^ ")"
-  |   prType (TYVAR tv) = "a" ^ Print.intToString tv
+  |   prType (TYVAR tv) = "a" ^ Int.toString(tv)
 end;
 
 functor TypeEnv(structure Type: TYPE 

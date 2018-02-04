@@ -154,8 +154,7 @@ functor Evaluator
 
 
 functor Value(structure Env: ENVIRONMENT
-              structure Exp : EXPRESSION
-              structure Print: PRINTUTIL): VALUE =
+              structure Exp : EXPRESSION): VALUE =
    struct
       type 'a pair = 'a * 'a
 
@@ -233,7 +232,7 @@ functor Value(structure Env: ENVIRONMENT
 		*)
 
 				(* Pretty-printing *)
-      fun printValue(NUMBERvalue(i)) = " " ^ Print.intToString(i)   |
+      fun printValue(NUMBERvalue(i)) = " " ^ Int.toString(i)   |
           printValue(BOOLvalue(true)) = " true"   |
           printValue(BOOLvalue(false)) = " false"   |
           printValue(NILvalue) = "[]"   |
