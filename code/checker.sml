@@ -403,7 +403,7 @@ struct
     | tyvarsTy (TYVAR tyvar) = [tyvar];
 
   (*
-	Prende in input un tipo FORALL comprese le variabili di tipo su cui di astra e le variabili libere nel corpo. Restituisce la lista di variabili di tipo libere nel corpo su cui non si sta astraendo.
+	Prende in input un tipo FORALL comprese le variabili di tipo su cui si astrae e le variabili libere nel corpo. Restituisce la lista di variabili di tipo libere nel corpo su cui non si sta astraendo.
   *)
   fun tyvarsTySch(FORALL(tyvarlist, ty))= List.minus(tyvarsTy ty, tyvarlist)
 
@@ -533,7 +533,14 @@ struct
   structure E = Environment()
   open E
   type typeenv = Type.TypeScheme Environment
-  
+  (*
+	 Prende in input un contesto di tipi e un tipo. Esegue i seguenti passi:
+	 - Crea una funzione f che prende in input uno schema di tipo e un tipo. Restituisce l'unione delle variabili di tipo su cui non si sta astraendo nello schema in input e le variabili di tipo prende in input.
+	 - Crea la lista tyvarsTE delle variabili di tipo nel contesto dei tipi preso in input.
+	 - crea la lista bound delle variabili di tipo che sono contenute in ty ma non nel contesto dei tipi.
+	 - Crea lo schema di tipo dove le variabili su cui si astrae sono quelle nella lista bound e il tipo è quello dato in input.
+	 Quindi si può dire che dato in input un contesto dei tipi e un tipo questa funzione restituisce uno schema il quale non ha variabili di tipo libere.
+  *)
   fun close(TE, ty)= 
       let fun f(tyscheme, tyvars)= List.union(Type.tyvarsTySch tyscheme,
                                               tyvars)

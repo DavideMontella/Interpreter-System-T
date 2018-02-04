@@ -106,7 +106,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
              un'eccezione.
           -> altrimenti il let non è correttamente formattato, quindi alza un'eccezione.
       - If:
-        chiama parseExpr sul resto della lista dei token. Il modo di operare è lo stesso dei casi precedenti, controlla che gli annidamenti siano rispettati. In particolare il caso della lettura del token else porta alla chiamata di ParseExprTail con argomenti l'espressione a sua volta costituita dalla terna di espressioni l'if-then-else ed il resto della lista di token, come secondo arogmento. Da notare che il then è obbligatorio, altrimenti viene alzata un'eccezione, mentre l'else non lo è.
+        chiama parseExpr sul resto della lista dei token. Il modo di operare è lo stesso dei casi precedenti, controlla che gli annidamenti siano rispettati. In particolare il caso della lettura del token else porta alla chiamata di ParseExprTail con argomenti l'espressione a sua volta costituita dalla terna di espressioni l'if-then-else ed il resto della lista di token, come secondo arogmento. Da notare che sia il then che l'else sono obbligatori, altrimenti viene alzata un'eccezione.
       - Fn:
         Deve essere correttamente formattato (come fn x => M). Ident rappresenta il nome del parametro, x nel nostro esempio, mentre body (vedere il codice qui sotto) rappresenta l'espressione che segue la freccia =>. Viene richiamata ParseExprTail con argomenti l'espressione costituita da x ed M (nel nostro esempio) ed il resto della lista dei token.
       - Altrimenti, alza un'eccezione (junk).
@@ -194,7 +194,14 @@ functor Parser(Expression:EXPRESSION): PARSER =
        
        | ParseExprTail(E, tail) = (E, tail)
        
-       
+       (*
+          Input: lista di token (tokens)
+          Output: coppia contenente una lista di espressioni e una lista di token
+          Chiama ParseExpr su tokens e controlla il risultato, che è una coppia contenente un'espressione e una lista di token:
+          - se la lista di token inizia con una virgola, allora richiama ParseList sulla lista restante privata della virgola iniziale e 
+            ritorna una coppia contenente la lista delle espressioni parsate (rispettando l'ordine iniziale) e la restante lista di token
+          - altrimenti ritorna una coppia che ha come primo elemento la lista contenente E e come secondo elemento la restante lista di token.
+       *)
        and ParseList(tokens) =
        	(case ParseExpr(tokens) of
        		(E, TokCOMMA :: rest) =>
