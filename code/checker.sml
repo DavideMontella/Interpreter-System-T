@@ -168,6 +168,7 @@ end;
 
 *)
 
+
 functor TypeChecker
   (structure Ex: EXPRESSION
    structure Ty: TYPE
@@ -192,6 +193,33 @@ struct
   exception NotImplemented of string
   exception Recover of Ex.Expression * int * Ty.subst * string list ;
 
+  (*
+    Input: un ambiente (TE) e un'espressione (exp).
+    Ouput: una terna contenente una sostituzione, un tipo e un booleano.
+    In sostanza questa funzione permette di tipare l'espressione data in input nell'abiente passatole.
+    Se l'espressione è:
+    - un booleano, allora ritorna una terna contenente la sostituzione identità, un tipo booleano e true.
+    - un numero, analogo al caso precedente.
+    - una lista, allora crea un nuovo identificatore per variabili di tipo dal quale forma una nuova variabile di tipo (new) e ritorna una 
+      terna contenente la sostituzione identità, un tipo lista di new e true.
+    - una coppia (CONSexpr), allora richiama tc sul primo termine della coppia (e1), passando a tc l'ambiente attuale (TE), per poi chiamare 
+      tc sul secondo termine della coppia (e2), passando questa volta l'ambiente sul quale si applica la sostituzione restituita dalla precedente chiamata a tc. Poi crea un nuovo identificatore per variabili di tipo e, tramite esso, un nuovo tipo (newt). Subito dopo crea un tipo lista di newt, per poi unificarlo con il tipo restituito dalla chiamata di tc su e2. Nel frattempo gestisce un'eccezione. Subito dopo unifica il tipo risultante dall'applicazione della sostituzione precedente a newt con il tipo ottenuto dall'applicazione della concatenazione delle sostituzioni S2 ed S3 a t1 (il tipo ritornato dalla chiamata a tc su e1).
+      Ritorna una terna contenente la composizione delle sostituzioni ottenute, il tipo ottenuto dall'applicazione delle ultime due sostituzioni (composte) sul tipo t2 (il tipo restituito dalla chiamata di tc su e2) e true se le chiamate di tc su e1 ed e2 hanno restituito true, altrimenti false. Lo so, è un casino..
+    - un'uguaglianza (e1=e2), allora richiama tc su e1 con ambiente TE (che ritorna una terna (S1, t1, ok1)) e poi tc su e2 con ambiente 
+      quello ottenuto dall'applicazione della sostituzione S1 nell'ambiente TE (che ritorna una terna (S2, t2, ok2)). In seguito unifica il tipo ottenuto dall'applicazione della sostituzione S2 al tipo t1. Ritorna una terna che ormai sarà semplice capire.
+    
+    (ADESSO CHE ABBIAMO CAPITO LA LOGICA SARÒ PIÙ SINTETICO)
+    - una dichiarazione di variabile , allora chiama tc passandogli TE ed e1, dove e1 è l'espressione che si associa ad x (let x=e1 in e2). 
+      Poi memorizza lo schema di tipo chiuso, ovvero senza variabili di tipo libere, legandole al tipo t1 (ritornato dalla precedente chiamata a tc). In seguito aggiorna l'ambiente con la precedente dichiarazione (chiamata a TypeEnv.declare()) e ritorna la solita terna.
+    - una dichiarazione di ricorsione (let rec x=e1 in e2), allora crea un nuovo schema di tipo vuoto, ovvero senza variabili su cui si 
+      astrae e con un nuovo tipo. Poi chiama tc su e1 e, successivamente, su e2 con le relative sostituzioni. Infine ritorna la solita terna.
+    - un'espressione "identica" (ad esempio: x), ritorna la terna contenente come secondo elemento il tipo di x (variabile in input)
+      nell'ambiente TE.
+    - un'astrazione (LAMBDAexpr, come fn x => e), allora crea un nuovo tipo ed un nuovo schema. In seguito crea un nuovo ambiente che passerà
+      a tc insieme ad e per creare un tipo freccia da ritornare come secondo argomento della terna.
+    - un'applicazione (e1,e2), allora deduce il tipo di e1 chiamando tc e ne ricava il tipo t1 dalla terna. Crea subito due nuove variabili 
+      di tipo new e new' e un tipo freccia da new a new', per poi unificare questo tipo freccia con t1. Poi deduce il tipo di e2 richiamando tc, operando prima le opportune sostituzioni, crea una nuova variabile tipo new2 ed un nuovo tipo freccia da e2 a new2. Unifica quest'ultimo tipo freccia con il tipo ottenuto applicando a t1 le opportune sostituzioni. Ritorna la terna che ha come secondo argomento il tipo new2 sul quale vengono applicate le opportune sostituzioni.
+  *)
   fun tc (TE: TyEnv.typeenv, exp: Ex.Expression): 
         Ty.subst *Ty.Type * bool =
    (case exp of
@@ -289,6 +317,9 @@ struct
 
    )handle Unify.NotImplemented msg => raise NotImplemented msg
        
+  (*
+    
+  *)
   and checkIntBin(TE,e1,e2) =
    (let val (S1,t1,ok1) = tc(TE,e1)
         val S1'  = Unify.unify(t1, Ty.mkTypeInt())
@@ -347,7 +378,7 @@ struct
 	  ....
 	  ....
 	  ....
-	  In parole povere prende i due tipi t,t' in input e restituisce una sostituzione tal eche S(t) = S(t').
+	  In parole povere prende i due tipi t,t' in input e restituisce una sostituzione tale che S(t) = S(t').
    *)
    fun unify(t,t')=
    let val tv = Ty.unTypeTyvar t
