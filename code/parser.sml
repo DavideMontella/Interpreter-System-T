@@ -6,10 +6,11 @@ Control.Print.printDepth := 100;
 signature PARSER =
    sig
       structure E: sig type Expression end
-
+		type Token
       exception Lexical of string
       exception Syntax of string
-
+		val MakeToken : string -> Token
+		val ParseExpr : Token list -> E.Expression * (Token list)
       val parse: string -> E.Expression
    end
 

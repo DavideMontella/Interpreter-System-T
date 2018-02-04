@@ -17,10 +17,6 @@ functor Interpreter
     structure Parser: PARSER
     structure TyCh: TYPECHECKER
     structure Evaluator:EVALUATOR
-      sharing Parser.E = TyCh.Exp = Evaluator.Exp 
-          and type Value.Exp = Parser.E.Expression
-          and TyCh.Type = Ty
-          and Evaluator.Val = Value
    ): INTERPRETER=
 
 struct
