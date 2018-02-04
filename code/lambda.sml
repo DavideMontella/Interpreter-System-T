@@ -15,8 +15,8 @@ signature EXPRESSION =
          APPLexpr of Expression * Expression   |
          NUMBERexpr of int
 
-(*
-      val prExp: int -> Expression -> string *)
+
+      val prExp: int -> Expression -> string 
    end;
    
 signature ENVIRONMENT =
@@ -81,12 +81,12 @@ functor Expression(structure List: LISTUTIL
       and prList' [] = ""
         | prList' [e] = pr e
         | prList'(hd::tl)= pr hd ^ "," ^ prList' tl
-(*
+
 
       fun prExp n e =
           let val s = pr e
-              val Size = size s
-           in if Size <= n then s
+              val ze = size s
+           in if ze <= n then s
               else
                  let val slist = explode s
                      val half = (n-3)div 2
@@ -94,7 +94,7 @@ functor Expression(structure List: LISTUTIL
                      val final = rev(List.prefix(rev slist,half))
                   in implode(initial @ (explode "...") @ final)
                  end
-          end *)
+          end
    end;
 
 functor Environment():ENVIRONMENT =
