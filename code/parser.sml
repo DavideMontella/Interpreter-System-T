@@ -21,6 +21,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
 		open Lexer
 		
 		datatype Token = TokOPENBR   |
+						TokSUCC |
 						TokCLOSEBR   |
 						TokTRUE   |
 						TokFALSE   |
@@ -66,6 +67,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
 			| MakeToken("false") = TokFALSE
 			| MakeToken("if") = TokIF
 			| MakeToken("then") = TokTHEN
+			| MakeToken("succ") = TokSUCC
 			| MakeToken("else") = TokELSE
 			| MakeToken("[") = TokOPENSQ
 			| MakeToken(",") = TokCOMMA
@@ -118,7 +120,12 @@ functor Parser(Expression:EXPRESSION): PARSER =
 				)   
           
 			| ParseExpr(TokNUMBER(i) :: rest) = ParseExprTail(NUMBERexpr(i), rest)
-		
+			
+			| ParseExpr(TokSUCC :: rest) =
+				let val (number, tail') = ParseExpr(rest)
+				in ParseExprTail(SUCCexpr(number), tail')
+				end
+				
 			| ParseExpr(TokNIL :: rest) = ParseExprTail(LISTexpr [], rest)
 		
 			| ParseExpr(TokTRUE :: rest) = ParseExprTail(BOOLexpr(true), rest)

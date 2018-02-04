@@ -14,8 +14,6 @@ signature VALUE =
 
       val ValueNil: Value
       val mkValueCons: Value * Value -> Value
-          and unValueHead: Value -> Value
-          and unValueTail: Value -> Value
 
       val mkValueClos: string * Exp * Env * Env -> Value
           and unValueClos: Value -> string * Exp * Env * Env
@@ -25,7 +23,6 @@ signature VALUE =
 
       val Rec: Env -> Env
 
-      exception EqValue
       val eqValue: Value * Value -> bool
       val printValue: Value -> string
    end;
@@ -107,6 +104,10 @@ functor Evaluator
                      in if eqValue(v1,mkValueBool true) then evaluate(E,e2)
                         else evaluate(E, e3)
                     end
+               | SUCCexpr(ex) => 
+               		let val v = evaluate(E, ex)
+               		in mkValueNumber(unValueNumber(v)+1)
+               		end 
                | CONSexpr(e1, e2) =>
                     let val v1 = evaluate(E, e1)
                         val v2 = evaluate(E, e2)
@@ -123,8 +124,6 @@ functor Evaluator
                | RECDECLexpr(f,e1,e2) => 
                     let val v1 = evaluate(E, e1)
                         val ? = unValueClos v1
-                                handle Value=> raise RuntimeError(
-                           "recursively  defined value is not a function")
                         val Env0 = mkEnv(Env.declare(f,v1,Env.emptyEnv))
                         val recE0 = Rec Env0
                         val newE = Env.plus(E, unEnv recE0)
@@ -171,35 +170,16 @@ functor Value(structure Env: ENVIRONMENT
       exception Value
 
       val mkValueNumber = NUMBERvalue
-      val mkValueBool = BOOLvalue
+      val mkValueBool	= BOOLvalue
+      val ValueNil 		= NILvalue
+      val mkValueCons	= CONSvalue
+      val mkValueClos	= CLOS
+      val mkEnv      	= ENV
 
-      val ValueNil = NILvalue
-      val mkValueCons = CONSvalue
-
-      val mkValueClos = CLOS
-      val mkEnv       = ENV
-
-
-      fun unValueNumber(NUMBERvalue(i)) = i   |
-          unValueNumber(_) = raise Value
-
-      fun unValueBool(BOOLvalue(b)) = b   |
-          unValueBool(_) = raise Value
-
-		(*
-		
-			####### eliminabili 
-		*)
-      fun unValueHead(CONSvalue(c, _)) = c   |
-          unValueHead(_) = raise Value
-
-      fun unValueTail(CONSvalue(_, c)) = c   |
-          unValueTail(_) = raise Value
-
-      fun unValueClos(CLOS q) = q |
-          unValueClos(_) = raise Value
-
-      fun unEnv(ENV e) = e
+      fun unValueNumber(NUMBERvalue(i)) = i
+      fun unValueBool(BOOLvalue(b)) 	= b
+      fun unValueClos(CLOS q) 			= q
+      fun unEnv(ENV e) 					= e
         
      
      (*
@@ -211,7 +191,6 @@ functor Value(structure Env: ENVIRONMENT
      		- altrimenti non sono confrontabili, quindi false
      *)
      
-      exception EqValue
 
       fun eqValue(NUMBERvalue v,NUMBERvalue v') = v=v' |
           eqValue(BOOLvalue v, BOOLvalue v') = v=v' |

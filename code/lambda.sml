@@ -25,6 +25,7 @@ signature EXPRESSION =
          BOOLexpr of bool   |
          EQexpr of Expression * Expression   |
          CONDexpr of Expression * Expression * Expression   |
+         SUCCexpr of Expression |
          CONSexpr of Expression * Expression   |
          LISTexpr of Expression list   |
          DECLexpr of string * Expression * Expression   |
@@ -64,6 +65,7 @@ functor Expression(structure List: LISTUTIL): EXPRESSION =
          BOOLexpr of bool   |
          EQexpr of Expression pair   |
          CONDexpr of Expression * Expression * Expression   |
+         SUCCexpr of Expression |
          CONSexpr of Expression pair   |
          LISTexpr of Expression list   |
          DECLexpr of string * Expression * Expression   |
@@ -81,6 +83,7 @@ functor Expression(structure List: LISTUTIL): EXPRESSION =
         | pr(CONDexpr(e1,e2,e3))=
            " if" ^ pr(e1) ^ " then" ^ pr(e2) ^
            " else" ^ pr(e3)
+        | pr(SUCCexpr exp) = "succ " ^ pr(exp)
         | pr(CONSexpr p) = printPair "::" p
         | pr(LISTexpr l) = prList l
         | pr(DECLexpr(f,e1,e2))=
