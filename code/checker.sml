@@ -475,9 +475,14 @@ struct
   infixr on
   
   (*
-	 Prende in input una funzione S e un tipo FORALL. Dopodichè esegue i seguenti passi:
+	 Prende in input una sostituizione (subst) S e un tipo FORALL. Dopodichè esegue i seguenti passi:
 	 - Crea una variabile fv che contiene la lista di variabili di tipo in ty.
-	 - Crea una variabile fvrange 
+	 - Crea una variabile fvrange che sarà una lista creata con la funzione List.fold nel seguente modo:
+		- Gli dà in input una funzione che prende una coppia di liste e ne restituisce l'unione con l'unica modifica al primo elemento. Il primo elemento sarà la lista di variabili di tipo in esso alla quala è stata applicata la funzione S.
+		- La lista vuota e fv.
+		- Il risultato quindi sarà la lista di tutte le variabili libere al quale di ty al quale è stata applicata la funzione di sostituzione S.
+	- Crea la lista criticals che contiene tutte le variabili di tipo libere in ty su cui si vuole astrarre.
+	- Crea una lista criticals' 
   *)
   fun onScheme(S,FORALL(bounds,ty)) = 
       let val fv = tyvarsTy ty

@@ -44,7 +44,7 @@ struct
   fun map f [] = []
     | map f (hd::tl) = f hd :: map f tl
   
-  (*Prende in input una funzione f, un elemento che viene restituito solo quando la lista data in input è vuota e una lista. Restituisce l'applicazione di f sulla coppia (hd, ric) dove hd è il primo elemento della lista e ric è il risultato della chiamata ricorsiva fatta dandogli in input le stesse cose prese in input ed la lista diminuita del primo elemento*)
+  (*Prende in input una funzione f, un elemento (che viene restituito solo quando la lista data in input è vuota) e una lista. Restituisce l'applicazione di f sulla coppia (hd, ric) dove hd è il primo elemento della lista e ric è il risultato della chiamata ricorsiva fatta dandogli in input le stesse cose prese in input ed la lista diminuita del primo elemento*)
   fun fold f b [] = b
     | fold f b (hd::tl) = f(hd,fold f b tl)
   
