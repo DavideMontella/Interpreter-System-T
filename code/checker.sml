@@ -398,7 +398,10 @@ struct
 
   (*
     Prende un TypeScheme e ritorna un Type. Esegue i seguenti passi:
-	- Per prima cosa crea una variabile old_to_new_tyvars non è altro che la lista tyvars .  
+	- Per prima cosa crea una variabile old_to_new_tyvars che non è altro che la lista di coppie tali che il primo elemento sarà il numero della variabile di tipo dato in input e il secondo sarà il nuovo numero della stessa variabile di tipo. Quindoi si può dire che è una ridenominazione delle variabili di tipo;
+	- Crea una funzione find che non fa altro che prendere in input un identificatore di variabile di tipo (intero) e una lista di coppie creata nel modo descritto poco fa e restituisce il nuovo identificatore per quella variabile di tipo;
+	- Crea una funzione ty_istance che prende in input un tipo e restituisce il type in input con tutte le variabili di tipo mappate nelle nuove variabili di tipo create nel primo passo.
+	- Applica ty_instance al corpo di FORALL. Quindi in parole povere instance prende in input un FORALL e restituisce il suo copro con le variabili di tipo su cui si sta astraendo ridenominate.
   *)
   fun instance(FORALL(tyvars,ty))=
   let val old_to_new_tyvars = map (fn tv=>(tv,freshTyvar())) tyvars
