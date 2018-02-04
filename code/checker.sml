@@ -318,7 +318,9 @@ struct
    )handle Unify.NotImplemented msg => raise NotImplemented msg
        
   (*
-    
+    Input: un ambiente (TE) e due espressioni (e1 ed e2)
+    Output: una terna (sostituzione, tipo, booleano)
+    Prova a tipare con tipo INT entrambe le espressioni partendo dall'ambiente TE.
   *)
   and checkIntBin(TE,e1,e2) =
    (let val (S1,t1,ok1) = tc(TE,e1)
@@ -332,6 +334,11 @@ struct
      in (S2' oo S2 oo S1' oo S1, Ty.mkTypeInt(), ok1 andalso ok2)
     end handle Recover q=> Recovery.report q);
 
+  (*
+    Input: un'espressione e
+    Output: booleano
+    Ritorna true se l'espressione e è tipabile, altrimenti false.
+  *)
   fun typecheck(e) = let val (_,ty,ok) =
                           tc(TyEnv.emptyEnv,e)
                       in (ty,ok)
