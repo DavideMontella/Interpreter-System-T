@@ -6,7 +6,15 @@ signature LEXICAL =
 structure Lexer : LEXICAL =
 	struct
 		(* Lexer *)
-		
+
+		(*
+			Input: un carattere (sym)
+			Output: booleano
+			Restituisce true se sym è un carattere simbolico tra quelli definiti qui sotto.
+		*)
+		fun symbolic(sym) = List.exists (fn x => x = sym) ["(", ")", "[", "]", ",", "+", "-", "*"]
+
+
 		(*
 		lex è il nostro lexer, prende una stringa accum e una lista di caratteri, sia this la testa della lista
 			- parse per prima cosa chiama lex("", explode input), cioè trasforma il termine passato in 
@@ -26,9 +34,6 @@ structure Lexer : LEXICAL =
 			- il caso base di lex viene raggiunto quando list diventa vuota, quindi aggiunge l'ultima stringa
 				accumulata, e ritornando dalle chiamate ricorsive le stringhe vengono aggiunte in testa
 		*)
-
-		fun symbolic(sym) = List.exists (fn x => x = sym) ["(", ")", "[", "]", ",", "+", "-", "*"]
-
 		fun lex(accum, this :: (rest : char list)) =
 			if Char.isSpace this then
 				(if accum = "" then lex("", rest)
