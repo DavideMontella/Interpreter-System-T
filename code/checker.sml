@@ -319,6 +319,13 @@ struct
    val op on = Ty.on
    infix oo
    val op oo = Ty.oo
+   (*
+	  Prende in input una variabile di tipo tv e un tipo t. Esegue i seguenti passi:
+	  - Controlla se t è di tipo int o bool. Se il controllo non porta ad errori allora vuol dire che tv non può essere contenuta in t e torna false. Altrimenti prosegue;
+	  - Controlla se t è una variabile di tipo. Se lo è allora ritorna il risultato booleano dell'uguaglianza tra esso e tv. Altrimenti prosegue;
+	  - Controlla se è una lista di tipo. Controlla ricorsivamente se nel tipo di t occorre tv. Altrimenti prosegue;
+	  - Controlla se t è una tipo freccia. Se lo è allora ricorsivamente controllerà se tv occorre nell'variabili su cui si astrae o in quelle contenute nel corpo. Altrimenti ritorna un eccezione.	 
+   *)
    fun occurs(tv:Ty.tyvar,t:Ty.Type):bool=
      (Ty.unTypeInt t; false)              handle Ty.Type=>
      (Ty.unTypeBool t; false)             handle Ty.Type=>
