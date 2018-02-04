@@ -43,7 +43,8 @@ signature EVALUATOR =
                     
 (*
 	funtore che ritorna l'evaluator, prende le strutture dei valori, degli ambienti e delle espressioni
-		- ha una sola funzione evaluate che prende un'espressione e ritorna un valore
+		- ha una sola funzione evaluate che prende un'espressione e ritorna un valore,
+			effettua valutazione eager statica
 			- questa chiama una funzione locale evaluate con argomenti l'espressione e un ambiente vuoto
 		- la funzione locale evaluate, funziona per casi su tutte le possibili espressioni
 			- casi base:
@@ -51,6 +52,18 @@ signature EVALUATOR =
 					rispettivamente mkValueNumber e mkValueBool
 			- uguaglianza, quindi coppia di espressioni, le valuta entrambe, chiama eqValue, 
 				per effettuare il confronto dei valori ottenuti, e costruisce il BOOLvalue corrispondente
+			- if cond then ex1 else ex2, valuta cond, se è true, valuta ex1 altrimenti valuta ex2
+			- cons, valuta i due termini, e ritorna un cons che rappresenta una concatenzione dei due valori
+				ottenuti (non una lista)
+			- lista
+				- vuota, quindi ValueNil
+				- viene convertita in una concatenzione (cons), valutandone da testa a coda tutti glie elementi
+			- ## let, da verificare
+			- ## rec, da verificare
+			- variabile, valuta la variabile nell'ambiente associato
+			- applicazione, valuta entrambe le espressioni, "spacchetta" la prima espressione, che deve essere
+				una chiusura, quindi 
+			
 				
 		
 *)                    
@@ -145,9 +158,7 @@ functor Value(structure Env: ENVIRONMENT
                        BOOLvalue of bool   |
                        NILvalue   |
                        CONSvalue of Value pair |
-		       CLOS of string
-                            *  Exp
-                            *  Env * Env
+		       		   CLOS of string *  Exp *  Env * Env
            and Env   = ENV of Value Env.Environment
 
       exception Value
@@ -187,8 +198,6 @@ functor Value(structure Env: ENVIRONMENT
           eqValue(NILvalue,NILvalue) = true |
           eqValue(CONSvalue(v1,v2),CONSvalue(v1',v2'))= 
              eqValue(v1,v1') andalso eqValue(v2,v2') |
-          eqValue(CLOS _, _) = raise EqValue |
-          eqValue(_, CLOS _) = raise EqValue |
           eqValue (_,_) = false
           
 
