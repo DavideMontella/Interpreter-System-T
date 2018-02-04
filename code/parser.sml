@@ -168,7 +168,13 @@ functor Parser(Expression:EXPRESSION): PARSER =
 
        (*
           Input: un'espressione (E) e una lista di token
-          Output: 
+          Output: coppia contenente un'espressione e una lista di token.
+          - se la lista di token inizia con =, allora chiama ParseExpr con argomento la lista restante di token, senza il token in testa, e richiama ParseExprTail con argomenti l'espressione (coppia di espressioni) EQexpr(E,E') ed il resto della lista di token.
+          - se la lista di token inizia con l'operatore ::, il caso è analogo al precedente.
+          - se la lista di token inizia con una parentesi tonda aperta, allora chiama ParseExpr (in modo analogo a quanto visto prima) e 
+            controlla che vi sarà la corrispondente parentesi tonda chiusa, per poi richiamare ParseExprTail con argomenti l'applicazione APPLexpr(E,E') e il resto della lista di token. In caso contrario alza un'eccezione.
+          - altrimenti ritorna l'input invariato.
+          NOTA: le funzioni ParseExpr e ParseExprTail sono mutuamente ricorsive e, tramite chiamate reciproche, permettono di valutare la corretta formattazione del testo e di identificare i vari costrutti del linguaggio, come if-then-else, il let, l'applicazione, ecc.
        *)
        and ParseExprTail(E, TokEQUALS :: tail) =
        	let val (E', tail') = ParseExpr(tail)
