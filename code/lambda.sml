@@ -104,14 +104,18 @@ struct
    exception Retrieve of string;
    
    val emptyEnv = [];
-
+   (*Aggiunge all'ambiente e la coppia (s,obj)*)
    fun declare(s:string,obj:'a,e:'a Environment)=
        (s,obj)::e
-
+   (*
+	 Data una variabile e un ambiente retrieve ti restituisce il valore della variabile.
+   *)
    fun retrieve(s,[])= raise Retrieve(s)
    |   retrieve(s,(s',obj)::rest) =
            if s=s' then obj else retrieve(s,rest)
-   (*Prende in input una funzione ed una lista di coppie (chiave,valore) e restituisce la stessa lista con la differenza che ad ogni valore è stata applicata la funzione presa in input*)
+   (*
+	  Prende in input una funzione ed una lista di coppie (chiave,valore) e restituisce la stessa lista con la differenza che ad ogni valore è stata applicata la funzione presa in input
+   *)
    fun map f [] = []
      | map f ((hd as (key,obj))::tl)= (key, f(obj)) :: map f tl
 
