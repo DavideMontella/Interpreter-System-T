@@ -125,14 +125,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
 
 			| ParseExprTail(E, tail) = (E, tail)
        
-       (*
-          Input: lista di token (tokens)
-          Output: coppia contenente una lista di espressioni e una lista di token
-          Chiama ParseExpr su tokens e controlla il risultato, che è una coppia contenente un'espressione e una lista di token:
-          - se la lista di token inizia con una virgola, allora richiama ParseList sulla lista restante privata della virgola iniziale e 
-            ritorna una coppia contenente la lista delle espressioni parsate (rispettando l'ordine iniziale) e la restante lista di token
-          - altrimenti ritorna una coppia che ha come primo elemento la lista contenente E e come secondo elemento la restante lista di token.
-       *)
+
 		and ParseList(tokens) =
 			(case ParseExpr(tokens) of
 				(E, TokCOMMA :: rest) =>
@@ -142,14 +135,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
 				| (E, tail) => ([E], tail)
 			)
 
-		(*
-			- riceve una stringa in input
-			- chiama il lexer su input, e ottiene una lista di stringhe
-			- usa map che applica MakeToken a ogni stringa della lista, e ottiene la lista di token
-			- applica ParseExpr alla lista di token, e ottiene una coppia (Expression, list)
-				- se la lista è vuota, allora ritorna l'expression
-				- altrimenti lancia un'eccezione
- 		*)
+
 		fun parse(input) =
 			let val LexStrings = Lexer.lex("", explode input)
 				val (E, nil) = ParseExpr(map MakeToken LexStrings)

@@ -337,5 +337,59 @@ and ParseExprTail(E, TokEQUALS :: tail)                             :           
 
 
 
+and ParseList(tokens)                                               :                  (*
+                                                                                          Input: lista di token (tokens)
+                                                                                          Output: coppia contenente una lista di espressioni e una lista di token
+                                                                                          Chiama ParseExpr su tokens e controlla il risultato, che è una coppia contenente un'espressione e una lista di token:
+                                                                                          - se la lista di token inizia con una virgola, allora richiama ParseList sulla lista restante privata della virgola iniziale e 
+                                                                                            ritorna una coppia contenente la lista delle espressioni parsate (rispettando l'ordine iniziale) e la restante lista di token
+                                                                                          - altrimenti ritorna una coppia che ha come primo elemento la lista contenente E e come secondo elemento la restante lista di token.
+                                                                                       *)
+
+
+
+fun parse(input)                                                    :                  (*
+			                                                                                - riceve una stringa in input
+			                                                                                - chiama il lexer su input, e ottiene una lista di stringhe
+			                                                                                - usa map che applica MakeToken a ogni stringa della lista, e ottiene la lista di token
+			                                                                                - applica ParseExpr alla lista di token, e ottiene una coppia (Expression, list)
+				                                                                                - se la lista è vuota, allora ritorna l'expression
+				                                                                                - altrimenti lancia un'eccezione
+                                                                                 		*)
+
+
+
+
+
+
+######################################
+
+
+
+LEXER.SML
+
+
+
+
+fun lex(accum, this :: (rest : char list))                          :                   (*
+		                                                                                    lex è il nostro lexer, prende una stringa accum e una lista di caratteri, sia this la testa della lista
+			                                                                                    - parse per prima cosa chiama lex("", explode input), cioè trasforma il termine passato in 
+				                                                                                    input in una lista di caratteri
+			                                                                                    - lex scorre dalla testa alla coda la lista di caratteri e usa accum per 'accumulare' un token
+			                                                                                    - ritorna la lista di token
+			                                                                                    - la funzione opera per casi:
+				                                                                                    - se il carattere 'this' in testa alla lista è uno spazio
+					                                                                                    allora se la parola accumulata è vuota, chiama lex sul resto della lista
+					                                                                                    altrimenti inserisce la parola accumulata il testa alla lista e chiama lex con
+						                                                                                    un primo argomento stringa vuota
+				                                                                                    - se accum è vuoto allora, chiama lex con la stringa this
+				                                                                                    - se accum è alphaNum e this è punteggiatura, o vicevera, allora aggiunge accum alla lista
+					                                                                                    e chiama lex con argomento this
+				                                                                                    - se accum o this sono simbolici, allora aggiunge accum alla lista e chiama lex con this
+				                                                                                    - altrimenti concatena accum e this, e chiama lex con questa nuova stringa
+			                                                                                    - il caso base di lex viene raggiunto quando list diventa vuota, quindi aggiunge l'ultima stringa
+				                                                                                    accumulata, e ritornando dalle chiamate ricorsive le stringhe vengono aggiunte in testa
+		                                                                                 *)
+
 
 
