@@ -64,6 +64,7 @@ signature TYPECHECKER =
       structure Type: sig type Type end
       exception NotImplemented of string
       val typecheck: Exp.Expression -> Type.Type * bool
+	  (*val tc: TyEnv.typeenv * Exp.Expression -> Type.subst * Type.Type * bool*)
    end;
                         (* the type checker *)   
 signature UNIFY=
@@ -161,6 +162,7 @@ end;
 		- utilizzata esclusivamente per chiamare tc, con argomenti l'Expression corrispondente al termine
 			parsato e contesto dei tipi vuoto
 		- ritorna una coppia: il tipo del termine e un booleano che indica se il termine è tipabile o meno
+
 	- tc, effettua il typechecking su un espressione, lavora per casi
 		- casi base:
 			- Booleani e interi, rispettivamente ritornano tipi primiti BOOL e INT ottenuti chiamando
@@ -314,6 +316,11 @@ struct
           in (S3 oo S2 oo S1' oo S1,
               S3 on new2, ok1 andalso ok2)
          end  handle Recover q=> Recovery.report q)
+	| Ex.SUCCexpr(e) =>  (case e of 
+			Ex.NUMBERexpr(s) => (let val (s,t,b) = (tc(TE,Ex.EQexpr (Ex.NUMBERexpr 20,e))) in (s,Ty.mkTypeInt(),b) end)
+						 |  Ex.IDENTexpr s =>  tc(TE,e)
+						 | 	Ex.SUCCexpr(s) => tc(TE,e))
+		
 
    )handle Unify.NotImplemented msg => raise NotImplemented msg
        
