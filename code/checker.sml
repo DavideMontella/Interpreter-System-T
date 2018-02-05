@@ -156,19 +156,6 @@ struct
       end
 end;
 
-(*
-	funtore che ritorna il typechecker
-	- typecheck, è l'unica funzione utilizzata dall'esterno, che prende un espressione 
-		- utilizzata esclusivamente per chiamare tc, con argomenti l'Expression corrispondente al termine
-			parsato e contesto dei tipi vuoto
-		- ritorna una coppia: il tipo del termine e un booleano che indica se il termine è tipabile o meno
-
-	- tc, effettua il typechecking su un espressione, lavora per casi
-		- casi base:
-			- Booleani e interi, rispettivamente ritornano tipi primiti BOOL e INT ottenuti chiamando
-				mkTypeBoole mkTypeInt
-
-*)
 
 
 functor TypeChecker
@@ -195,33 +182,8 @@ struct
   exception NotImplemented of string
   exception Recover of Ex.Expression * int * Ty.subst * string list ;
 
-  (*
-    Input: un ambiente (TE) e un'espressione (exp).
-    Ouput: una terna contenente una sostituzione, un tipo e un booleano.
-    In sostanza questa funzione permette di tipare l'espressione data in input nell'abiente passatole.
-    Se l'espressione è:
-    - un booleano, allora ritorna una terna contenente la sostituzione identità, un tipo booleano e true.
-    - un numero, analogo al caso precedente.
-    - una lista, allora crea un nuovo identificatore per variabili di tipo dal quale forma una nuova variabile di tipo (new) e ritorna una 
-      terna contenente la sostituzione identità, un tipo lista di new e true.
-    - una coppia (CONSexpr), allora richiama tc sul primo termine della coppia (e1), passando a tc l'ambiente attuale (TE), per poi chiamare 
-      tc sul secondo termine della coppia (e2), passando questa volta l'ambiente sul quale si applica la sostituzione restituita dalla precedente chiamata a tc. Poi crea un nuovo identificatore per variabili di tipo e, tramite esso, un nuovo tipo (newt). Subito dopo crea un tipo lista di newt, per poi unificarlo con il tipo restituito dalla chiamata di tc su e2. Nel frattempo gestisce un'eccezione. Subito dopo unifica il tipo risultante dall'applicazione della sostituzione precedente a newt con il tipo ottenuto dall'applicazione della concatenazione delle sostituzioni S2 ed S3 a t1 (il tipo ritornato dalla chiamata a tc su e1).
-      Ritorna una terna contenente la composizione delle sostituzioni ottenute, il tipo ottenuto dall'applicazione delle ultime due sostituzioni (composte) sul tipo t2 (il tipo restituito dalla chiamata di tc su e2) e true se le chiamate di tc su e1 ed e2 hanno restituito true, altrimenti false. Lo so, è un casino..
-    - un'uguaglianza (e1=e2), allora richiama tc su e1 con ambiente TE (che ritorna una terna (S1, t1, ok1)) e poi tc su e2 con ambiente 
-      quello ottenuto dall'applicazione della sostituzione S1 nell'ambiente TE (che ritorna una terna (S2, t2, ok2)). In seguito unifica il tipo ottenuto dall'applicazione della sostituzione S2 al tipo t1. Ritorna una terna che ormai sarà semplice capire.
-    
-    (ADESSO CHE ABBIAMO CAPITO LA LOGICA SARÒ PIÙ SINTETICO)
-    - una dichiarazione di variabile , allora chiama tc passandogli TE ed e1, dove e1 è l'espressione che si associa ad x (let x=e1 in e2). 
-      Poi memorizza lo schema di tipo chiuso, ovvero senza variabili di tipo libere, legandole al tipo t1 (ritornato dalla precedente chiamata a tc). In seguito aggiorna l'ambiente con la precedente dichiarazione (chiamata a TypeEnv.declare()) e ritorna la solita terna.
-    - una dichiarazione di ricorsione (let rec x=e1 in e2), allora crea un nuovo schema di tipo vuoto, ovvero senza variabili su cui si 
-      astrae e con un nuovo tipo. Poi chiama tc su e1 e, successivamente, su e2 con le relative sostituzioni. Infine ritorna la solita terna.
-    - un'espressione "identica" (ad esempio: x), ritorna la terna contenente come secondo elemento il tipo di x (variabile in input)
-      nell'ambiente TE.
-    - un'astrazione (LAMBDAexpr, come fn x => e), allora crea un nuovo tipo ed un nuovo schema. In seguito crea un nuovo ambiente che passerà
-      a tc insieme ad e per creare un tipo freccia da ritornare come secondo argomento della terna.
-    - un'applicazione (e1,e2), allora deduce il tipo di e1 chiamando tc e ne ricava il tipo t1 dalla terna. Crea subito due nuove variabili 
-      di tipo new e new' e un tipo freccia da new a new', per poi unificare questo tipo freccia con t1. Poi deduce il tipo di e2 richiamando tc, operando prima le opportune sostituzioni, crea una nuova variabile tipo new2 ed un nuovo tipo freccia da e2 a new2. Unifica quest'ultimo tipo freccia con il tipo ottenuto applicando a t1 le opportune sostituzioni. Ritorna la terna che ha come secondo argomento il tipo new2 sul quale vengono applicate le opportune sostituzioni.
-  *)
+  
+
   fun tc (TE: TyEnv.typeenv, exp: Ex.Expression): 
         Ty.subst *Ty.Type * bool =
    (case exp of
@@ -329,11 +291,8 @@ struct
    )handle Unify.NotImplemented msg => raise NotImplemented msg
        
 	   (*Ty.mkTypeArrow(Ty.mkTypeTyvar(freshTyvar()) ,Ty.mkTypeTyvar(freshTyvar()))*)
-  (*
-    Input: un ambiente (TE) e due espressioni (e1 ed e2)
-    Output: una terna (sostituzione, tipo, booleano)
-    Prova a tipare con tipo INT entrambe le espressioni partendo dall'ambiente TE.
-  *)
+
+
   and checkIntBin(TE,e1,e2) =
    (let val (S1,t1,ok1) = tc(TE,e1)
         val S1'  = Unify.unify(t1, Ty.mkTypeInt())
@@ -346,11 +305,8 @@ struct
      in (S2' oo S2 oo S1' oo S1, Ty.mkTypeInt(), ok1 andalso ok2)
     end handle Recover q=> Recovery.report q);
 
-  (*
-    Input: un'espressione e
-    Output: booleano
-    Ritorna true se l'espressione e è tipabile, altrimenti false.
-  *)
+
+
   fun typecheck(e) = let val (_,ty,ok) =
                           tc(TyEnv.emptyEnv,e)
                       in (ty,ok)
@@ -369,13 +325,8 @@ struct
    val op on = Ty.on
    infix oo
    val op oo = Ty.oo
-   (*
-	  Prende in input una variabile di tipo tv e un tipo t. Esegue i seguenti passi:
-	  - Controlla se t è di tipo int o bool. Se il controllo non porta ad errori allora vuol dire che tv non può essere contenuta in t e torna false. Altrimenti prosegue;
-	  - Controlla se t è una variabile di tipo. Se lo è allora ritorna il risultato booleano dell'uguaglianza tra esso e tv. Altrimenti prosegue;
-	  - Controlla se è una lista di tipo. Controlla ricorsivamente se nel tipo di t occorre tv. Altrimenti prosegue;
-	  - Controlla se t è una tipo freccia. Se lo è allora ricorsivamente controllerà se tv occorre nell'variabili su cui si astrae o in quelle contenute nel corpo. Altrimenti ritorna un eccezione.	 
-   *)
+
+
    fun occurs(tv:Ty.tyvar,t:Ty.Type):bool=
      (Ty.unTypeInt t; false)              handle Ty.Type=>
      (Ty.unTypeBool t; false)             handle Ty.Type=>
@@ -390,15 +341,8 @@ struct
      end                                  handle Ty.Type=>
    raise NotImplemented "(the occur check)"
 
-   (*
-	  Prende in input due tipi t,t' e restituisce una sostituzione. Questa sostituzione la crea eseguendo i seguenti passi:
-	  - Verifica se t e t' sono due variabili di tipo. Se è cosi allora ritorna una sostituzione che prende il numero identificativo di t e ritorna t'. Se invece t' non è una variabile di tipo e invece t si si và a controllare se tv occorre in t'. Se non è cosi allora costruisco la sostituzione che va da dall'identificatore di t in t'. Altrimenti prosegue;
-	  - Verifica se t' è un 
-	  ....
-	  ....
-	  ....
-	  In parole povere prende i due tipi t,t' in input e restituisce una sostituzione tale che S(t) = S(t').
-   *)
+
+
    fun unify(t,t')=
    let val tv = Ty.unTypeTyvar t
     in let val tv' = Ty.unTypeTyvar t'
@@ -466,18 +410,11 @@ struct
     | tyvarsTy (ARROW(ty,ty')) = List.union(tyvarsTy ty, tyvarsTy ty')
     | tyvarsTy (TYVAR tyvar) = [tyvar];
 
-  (*
-	Prende in input un tipo FORALL comprese le variabili di tipo su cui si astrae e le variabili libere nel corpo. Restituisce la lista di variabili di tipo libere nel corpo su cui non si sta astraendo.
-  *)
+
+
   fun tyvarsTySch(FORALL(tyvarlist, ty))= List.minus(tyvarsTy ty, tyvarlist)
 
-  (*
-    Prende un TypeScheme e ritorna un Type. Esegue i seguenti passi:
-	- Per prima cosa crea una variabile old_to_new_tyvars che non è altro che la lista di coppie tali che il primo elemento sarà il numero della variabile di tipo dato in input e il secondo sarà il nuovo numero della stessa variabile di tipo. Quindoi si può dire che è una ridenominazione delle variabili di tipo;
-	- Crea una funzione find che non fa altro che prendere in input un identificatore di variabile di tipo (intero) e una lista di coppie creata nel modo descritto poco fa e restituisce il nuovo identificatore per quella variabile di tipo;
-	- Crea una funzione ty_istance che prende in input un tipo e restituisce il type in input con tutte le variabili di tipo mappate nelle nuove variabili di tipo create nel primo passo.
-	- Applica ty_instance al corpo di FORALL. Quindi in parole povere instance prende in input un FORALL e restituisce il suo copro con le variabili di tipo su cui si sta astraendo ridenominate.
-  *)
+
   fun instance(FORALL(tyvars,ty))=
   let val old_to_new_tyvars = map (fn tv=>(tv,freshTyvar())) tyvars
       exception Find;
@@ -525,9 +462,8 @@ struct
   type subst = Type -> Type
 
   fun Id x = x
-  (*
-    Prende in input due variabili di tipo e restituisce una funzione che mappa la prima variabile di tipo con la seconda variabile di tipo.
-  *)
+
+
   fun mkSubst(tv,ty)=
      let fun su(TYVAR tv')= if tv=tv' then ty else TYVAR tv'
          |   su(INT) = INT
@@ -541,16 +477,7 @@ struct
   fun on(S,t)= S(t)
   infixr on
   
-  (*
-	 Prende in input una sostituizione (subst) S e un tipo FORALL. Dopodichè esegue i seguenti passi:
-	 - Crea una variabile fv che contiene la lista di variabili di tipo in ty.
-	 - Crea una variabile fvrange che sarà una lista creata con la funzione List.fold nel seguente modo:
-		- Gli dà in input una funzione che prende una coppia di liste e ne restituisce l'unione con l'unica modifica al primo elemento. Il primo elemento sarà la lista di variabili di tipo in esso alla quala è stata applicata la funzione S.
-		- La lista vuota e fv.
-		- Il risultato quindi sarà la lista di tutte le variabili libere al quale di ty al quale è stata applicata la funzione di sostituzione S.
-	- Crea la lista criticals che contiene tutte le variabili di tipo libere in ty su cui si vuole astrarre.
-	- Crea una lista criticals' 
-  *)
+
   fun onScheme(S,FORALL(bounds,ty)) = 
       let val fv = tyvarsTy ty
           val fvrange= 
@@ -597,14 +524,7 @@ struct
   structure E = Environment()
   open E
   type typeenv = Type.TypeScheme Environment
-  (*
-	 Prende in input un contesto di tipi e un tipo. Esegue i seguenti passi:
-	 - Crea una funzione f che prende in input uno schema di tipo e un tipo. Restituisce l'unione delle variabili di tipo su cui non si sta astraendo nello schema in input e le variabili di tipo prende in input.
-	 - Crea la lista tyvarsTE delle variabili di tipo nel contesto dei tipi preso in input.
-	 - crea la lista bound delle variabili di tipo che sono contenute in ty ma non nel contesto dei tipi.
-	 - Crea lo schema di tipo dove le variabili su cui si astrae sono quelle nella lista bound e il tipo è quello dato in input.
-	 Quindi si può dire che dato in input un contesto dei tipi e un tipo questa funzione restituisce uno schema il quale non ha variabili di tipo libere.
-  *)
+
   fun close(TE, ty)= 
       let fun f(tyscheme, tyvars)= List.union(Type.tyvarsTySch tyscheme,
                                               tyvars)

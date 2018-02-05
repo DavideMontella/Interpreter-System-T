@@ -74,33 +74,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
 							else if IsIdent(s) then TokIDENT(s)
 							else raise SyntaxErr(s)
 
-		(*
-			ParseExpr effettua il parsing della token list, quindi scandisce la lista di token dalla testa 
-			alla coda
-			- Parentesi tonda aperta:
-				chiama ParseExpr sul resto della token list:
-          -> se incontra una parentesi tonda chiusa (eventualmente ci sono altre chiamate a funzione prima di entrare in questo caso), allora 
-             chiama ParseExprTail con argomenti un'espressione E e il resto della token list.
-          -> altrimenti non c'è niente dopo la parentesi aperta, quindi alza un'eccezione.
-      - I casi number, nil, true, ident e opensq immediatamente seguito da colsesq sono semplici.
-      - Parentesi quadra aperta (opensq):
-        chiama ParseList sul resto della token list:
-          -> se incontra una parentesi quadra chiusa (come nel caso della tonda, possono esserci altre chiamate), allora chiama ParseExprTail
-             con argomenti la lista delle espressioni Es e il resto della lista dei token.
-          -> altrimenti non c'è niente dopo la parentesi aperta, quindi alza un'eccezione.
-      - Let formattato correttamente (seguito da nome di variabile, uguale e resto della lista dei token):
-        Chiama ParseExpr sul resto della lista dei token:
-          -> se incontra un in, allora richiama come al solito ParseExpr sul resto della lista dei token, altrimenti alza un'eccezione.
-          -> se incontra un end (come sempre, possono esserci altre chiamate a funzione), allora chiama ParseExpreTail con argomenti il nome 
-             della variabile (ident) seguito dalle due espressioni (binding e scope) e il resto della lista dei token, altrimenti alza 
-             un'eccezione.
-          -> altrimenti il let non è correttamente formattato, quindi alza un'eccezione.
-      - If:
-        chiama parseExpr sul resto della lista dei token. Il modo di operare è lo stesso dei casi precedenti, controlla che gli annidamenti siano rispettati. In particolare il caso della lettura del token else porta alla chiamata di ParseExprTail con argomenti l'espressione a sua volta costituita dalla terna di espressioni l'if-then-else ed il resto della lista di token, come secondo arogmento. Da notare che sia il then che l'else sono obbligatori, altrimenti viene alzata un'eccezione.
-      - Fn:
-        Deve essere correttamente formattato (come fn x => M). Ident rappresenta il nome del parametro, x nel nostro esempio, mentre body (vedere il codice qui sotto) rappresenta l'espressione che segue la freccia =>. Viene richiamata ParseExprTail con argomenti l'espressione costituita da x ed M (nel nostro esempio) ed il resto della lista dei token.
-      - Altrimenti, alza un'eccezione (junk).
-		*)
+
 		
 		fun ParseExpr(TokOPENBR :: rest): Expression * Token list =
 				let val (E, TokCLOSEBR :: tail) = ParseExpr(rest)
@@ -138,16 +112,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
 				in  ParseExprTail(LAMBDAexpr(ident, body), tail)
 				end
 
-       (*
-          Input: un'espressione (E) e una lista di token
-          Output: coppia contenente un'espressione e una lista di token.
-          - se la lista di token inizia con =, allora chiama ParseExpr con argomento la lista restante di token, senza il token in testa, e richiama ParseExprTail con argomenti l'espressione (coppia di espressioni) EQexpr(E,E') ed il resto della lista di token.
-          - se la lista di token inizia con l'operatore ::, il caso è analogo al precedente.
-          - se la lista di token inizia con una parentesi tonda aperta, allora chiama ParseExpr (in modo analogo a quanto visto prima) e 
-            controlla che vi sarà la corrispondente parentesi tonda chiusa, per poi richiamare ParseExprTail con argomenti l'applicazione APPLexpr(E,E') e il resto della lista di token. In caso contrario alza un'eccezione.
-          - altrimenti ritorna l'input invariato.
-          NOTA: le funzioni ParseExpr e ParseExprTail sono mutuamente ricorsive e, tramite chiamate reciproche, permettono di valutare la corretta formattazione del testo e di identificare i vari costrutti del linguaggio, come if-then-else, il let, l'applicazione, ecc.
-       *)
+
 		and ParseExprTail(E, TokEQUALS :: tail) =
 				let val (E', tail') = ParseExpr(tail)
 				in  ParseExprTail(EQexpr(E, E'), tail')
