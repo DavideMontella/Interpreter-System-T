@@ -1,23 +1,5 @@
 use "lib.sml";
 
-(*
-	le espressioni del nostro linguaggio sono
-		- booleani
-		- interi
-		- uguaglianze su due espressioni, da capire se utile oltre al let, oppure come assegnamento
-		- concatenazioni, rappresentate da coppie, cioè la prima espressione concatenata alla seconda, 
-			che a sua volta	puo essere una concatenazione o una lista o un altro termine, l'espressione può 
-			essere eterogenea, ma poi non è tipabile
-		- lista, è una lista di espressioni, eterogenea (in questo caso poi non sarebbe comunque tipabile),
-			che dall'evaluator poi viene converita in una sequenza di concatenazioni
-		- ## il let, da capire se serve
-		- ## la dichiarazione di rec, da sistemare
-		- identificatori, cioè stringhe
-		- lambda astrazioni, cioè stringa, argomento dell'astrazione, e espressione corpo dell'astrazione
-		- applicazioni, coppia di espressioni
-		
-		prExp, converte una espressione in una stringa del nostro linguaggio
-*)
 
 signature EXPRESSION =
    sig

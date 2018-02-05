@@ -1,0 +1,395 @@
+SIGNATURES CON RELATIVI COMMENTI
+
+INTERP.SML
+
+
+functor Interpreter            :                       (* Un funtore è una sorta di funzione che prende come argomenti delle strutture e le utilizza indipendetemente
+                                                          da come sono state implementate con la sola condizione che abbiano la segnatura aspettata
+                                                                - interp, chiama in sequenza
+	                                                                - parse per fare il parsing della stringa
+	                                                                - typecheck per fare il typechecking della Expression ottenuta dal parser, ritorna il tipo ty e
+		                                                                un booleano ok, settato a true se il typecheck è andato a buon fine
+	                                                                - prType dovrebbe convertire il tipo ty in una stringa che corrisponde al tipaggio in sml,
+		                                                                ex. quindi se il nostro termine è di tipo INT, lo converte in una stringa "int"
+	                                                                - se il termine è tipabile (quindi ok è true), allora chiama evaluate sull'Expression ottenuta dal
+		                                                                parser
+	                                                                - printValue lo stampa 
+	
+	                                                                quindi la funzione ritorna la stringa ottenuta da prValue e la stringa ottenuta da prType
+		
+                                                        *)
+
+
+
+#########################################
+
+
+CHECKER.SML
+
+
+
+
+functor TypeChecker                                        :                          (*
+                                                                                        funtore che ritorna il typechecker
+                                                                                        - typecheck, è l'unica funzione utilizzata dall'esterno, che prende un espressione 
+	                                                                                        - utilizzata esclusivamente per chiamare tc, con argomenti l'Expression corrispondente al termine
+		                                                                                        parsato e contesto dei tipi vuoto
+	                                                                                        - ritorna una coppia: il tipo del termine e un booleano che indica se il termine è tipabile o meno
+
+                                                                                        - tc, effettua il typechecking su un espressione, lavora per casi
+	                                                                                        - casi base:
+		                                                                                        - Booleani e interi, rispettivamente ritornano tipi primiti BOOL e INT ottenuti chiamando
+			                                                                                        mkTypeBoole mkTypeInt
+
+                                                                                      *)
+
+
+struct
+
+
+
+fun tc(TE: TyEnv.typeenv, exp: Ex.Expression)               :                 (*
+                                                                                Input: un ambiente (TE) e un'espressione (exp).
+                                                                                Ouput: una terna contenente una sostituzione, un tipo e un booleano.
+                                                                                In sostanza questa funzione permette di tipare l'espressione data in input nell'abiente passatole.
+                                                                                Se l'espressione è:
+                                                                                - un booleano, allora ritorna una terna contenente la sostituzione identità, un tipo booleano e true.
+                                                                                - un numero, analogo al caso precedente.
+                                                                                - una lista, allora crea un nuovo identificatore per variabili di tipo dal quale forma una nuova variabile di tipo (new) e ritorna una 
+                                                                                  terna contenente la sostituzione identità, un tipo lista di new e true.
+                                                                                - una coppia (CONSexpr), allora richiama tc sul primo termine della coppia (e1), passando a tc l'ambiente attuale (TE), per poi chiamare 
+                                                                                  tc sul secondo termine della coppia (e2), passando questa volta l'ambiente sul quale si applica la sostituzione restituita dalla precedente chiamata a tc. Poi crea un nuovo identificatore per variabili di tipo e, tramite esso, un nuovo tipo (newt). Subito dopo crea un tipo lista di newt, per poi unificarlo con il tipo restituito dalla chiamata di tc su e2. Nel frattempo gestisce un'eccezione. Subito dopo unifica il tipo risultante dall'applicazione della sostituzione precedente a newt con il tipo ottenuto dall'applicazione della concatenazione delle sostituzioni S2 ed S3 a t1 (il tipo ritornato dalla chiamata a tc su e1).
+                                                                                  Ritorna una terna contenente la composizione delle sostituzioni ottenute, il tipo ottenuto dall'applicazione delle ultime due sostituzioni (composte) sul tipo t2 (il tipo restituito dalla chiamata di tc su e2) e true se le chiamate di tc su e1 ed e2 hanno restituito true, altrimenti false. Lo so, è un casino..
+                                                                                - un'uguaglianza (e1=e2), allora richiama tc su e1 con ambiente TE (che ritorna una terna (S1, t1, ok1)) e poi tc su e2 con ambiente 
+                                                                                  quello ottenuto dall'applicazione della sostituzione S1 nell'ambiente TE (che ritorna una terna (S2, t2, ok2)). In seguito unifica il tipo ottenuto dall'applicazione della sostituzione S2 al tipo t1. Ritorna una terna che ormai sarà semplice capire.
+                                                                                
+                                                                                (ADESSO CHE ABBIAMO CAPITO LA LOGICA SARÒ PIÙ SINTETICO)
+                                                                                - una dichiarazione di variabile , allora chiama tc passandogli TE ed e1, dove e1 è l'espressione che si associa ad x (let x=e1 in e2). 
+                                                                                  Poi memorizza lo schema di tipo chiuso, ovvero senza variabili di tipo libere, legandole al tipo t1 (ritornato dalla precedente chiamata a tc). In seguito aggiorna l'ambiente con la precedente dichiarazione (chiamata a TypeEnv.declare()) e ritorna la solita terna.
+                                                                                - una dichiarazione di ricorsione (let rec x=e1 in e2), allora crea un nuovo schema di tipo vuoto, ovvero senza variabili su cui si 
+                                                                                  astrae e con un nuovo tipo. Poi chiama tc su e1 e, successivamente, su e2 con le relative sostituzioni. Infine ritorna la solita terna.
+                                                                                - un'espressione "identica" (ad esempio: x), ritorna la terna contenente come secondo elemento il tipo di x (variabile in input)
+                                                                                  nell'ambiente TE.
+                                                                                - un'astrazione (LAMBDAexpr, come fn x => e), allora crea un nuovo tipo ed un nuovo schema. In seguito crea un nuovo ambiente che passerà
+                                                                                  a tc insieme ad e per creare un tipo freccia da ritornare come secondo argomento della terna.
+                                                                                - un'applicazione (e1,e2), allora deduce il tipo di e1 chiamando tc e ne ricava il tipo t1 dalla terna. Crea subito due nuove variabili 
+                                                                                  di tipo new e new' e un tipo freccia da new a new', per poi unificare questo tipo freccia con t1. Poi deduce il tipo di e2 richiamando tc, operando prima le opportune sostituzioni, crea una nuova variabile tipo new2 ed un nuovo tipo freccia da e2 a new2. Unifica quest'ultimo tipo freccia con il tipo ottenuto applicando a t1 le opportune sostituzioni. Ritorna la terna che ha come secondo argomento il tipo new2 sul quale vengono applicate le opportune sostituzioni.
+                                                                              *)
+
+
+
+
+
+
+and checkIntBin(TE,e1,e2)                                   :                 (*
+                                                                                Input: un ambiente (TE) e due espressioni (e1 ed e2)
+                                                                                Output: una terna (sostituzione, tipo, booleano)
+                                                                                Prova a tipare con tipo INT entrambe le espressioni partendo dall'ambiente TE.
+                                                                              *)
+
+
+
+
+
+
+fun typecheck(e)                                            :                 (*
+                                                                                Input: un'espressione e
+                                                                                Output: booleano
+                                                                                Ritorna true se l'espressione e è tipabile, altrimenti false.
+                                                                              *)
+
+
+
+end; (*TypeChecker)
+
+
+
+
+
+functor Unify(Ty:TYPE):UNIFY
+struct
+
+
+
+
+fun occurs(tv:Ty.tyvar,t:Ty.Type):bool                       :                (*
+	                                                                              Prende in input una variabile di tipo tv e un tipo t. Esegue i seguenti passi:
+	                                                                              - Controlla se t è di tipo int o bool. Se il controllo non porta ad errori allora vuol dire che tv non può essere contenuta in t e torna false. Altrimenti prosegue;
+	                                                                              - Controlla se t è una variabile di tipo. Se lo è allora ritorna il risultato booleano dell'uguaglianza tra esso e tv. Altrimenti prosegue;
+	                                                                              - Controlla se è una lista di tipo. Controlla ricorsivamente se nel tipo di t occorre tv. Altrimenti prosegue;
+	                                                                              - Controlla se t è una tipo freccia. Se lo è allora ricorsivamente controllerà se tv occorre nell'variabili su cui si astrae o in quelle contenute nel corpo. Altrimenti ritorna un eccezione.	 
+                                                                              *)
+
+
+
+
+
+fun unify(t,t')                                              :                (*
+	                                                                              Prende in input due tipi t,t' e restituisce una sostituzione. Questa sostituzione la crea eseguendo i seguenti passi:
+	                                                                              - Verifica se t e t' sono due variabili di tipo. Se è cosi allora ritorna una sostituzione che prende il numero identificativo di t e ritorna t'. Se invece t' non è una variabile di tipo e invece t si si và a controllare se tv occorre in t'. Se non è cosi allora costruisco la sostituzione che va da dall'identificatore di t in t'. Altrimenti prosegue;
+	                                                                              - Verifica se t' è un 
+	                                                                              ....
+	                                                                              ....
+	                                                                              ....
+	                                                                              In parole povere prende i due tipi t,t' in input e restituisce una sostituzione tale che S(t) = S(t').
+                                                                               *)
+
+
+
+
+
+end; (*Unify*)
+
+
+
+
+
+fun tyvarsTySch(FORALL(tyvarlist, ty))                      :                  (*
+                                                                                    Prende in input un tipo FORALL comprese le variabili di tipo su cui si astrae e le variabili libere nel corpo. Restituisce la lista di variabili di tipo libere nel corpo su cui non si sta astraendo.
+                                                                               *)
+
+
+
+
+
+fun instance(FORALL(tyvars,ty))                             :                  (*
+                                                                                    Prende un TypeScheme e ritorna un Type. Esegue i seguenti passi:
+	                                                                                - Per prima cosa crea una variabile old_to_new_tyvars che non è altro che la lista di coppie tali che il primo elemento sarà il numero della variabile di tipo dato in input e il secondo sarà il nuovo numero della stessa variabile di tipo. Quindoi si può dire che è una ridenominazione delle variabili di tipo;
+	                                                                                - Crea una funzione find che non fa altro che prendere in input un identificatore di variabile di tipo (intero) e una lista di coppie creata nel modo descritto poco fa e restituisce il nuovo identificatore per quella variabile di tipo;
+	                                                                                - Crea una funzione ty_istance che prende in input un tipo e restituisce il type in input con tutte le variabili di tipo mappate nelle nuove variabili di tipo create nel primo passo.
+	                                                                                - Applica ty_instance al corpo di FORALL. Quindi in parole povere instance prende in input un FORALL e restituisce il suo copro con le variabili di tipo su cui si sta astraendo ridenominate.
+                                                                               *)
+
+
+
+
+fun mkSubst(tv,ty)                                          :                   (*
+                                                                                    Prende in input due variabili di tipo e restituisce una funzione che mappa la prima variabile di tipo con la seconda variabile di tipo.
+                                                                                *)
+
+
+
+
+fun onScheme(S,FORALL(bounds,ty))                           :                     (*
+	                                                                                 Prende in input una sostituizione (subst) S e un tipo FORALL. Dopodichè esegue i seguenti passi:
+	                                                                                 - Crea una variabile fv che contiene la lista di variabili di tipo in ty.
+	                                                                                 - Crea una variabile fvrange che sarà una lista creata con la funzione List.fold nel seguente modo:
+		                                                                                - Gli dà in input una funzione che prende una coppia di liste e ne restituisce l'unione con l'unica modifica al primo elemento. Il primo elemento sarà la lista di variabili di tipo in esso alla quala è stata applicata la funzione S.
+		                                                                                - La lista vuota e fv.
+		                                                                                - Il risultato quindi sarà la lista di tutte le variabili libere al quale di ty al quale è stata applicata la funzione di sostituzione S.
+	                                                                                - Crea la lista criticals che contiene tutte le variabili di tipo libere in ty su cui si vuole astrarre.
+	                                                                                - Crea una lista criticals' 
+                                                                                  *)
+
+
+
+
+
+functor TypeEnv
+struct
+
+
+
+fun close(TE, ty)                                           :                     (*
+	                                                                                 Prende in input un contesto di tipi e un tipo. Esegue i seguenti passi:
+	                                                                                 - Crea una funzione f che prende in input uno schema di tipo e un tipo. Restituisce l'unione delle variabili di tipo su cui non si sta astraendo nello schema in input e le variabili di tipo prende in input.
+	                                                                                 - Crea la lista tyvarsTE delle variabili di tipo nel contesto dei tipi preso in input.
+	                                                                                 - crea la lista bound delle variabili di tipo che sono contenute in ty ma non nel contesto dei tipi.
+	                                                                                 - Crea lo schema di tipo dove le variabili su cui si astrae sono quelle nella lista bound e il tipo è quello dato in input.
+	                                                                                 Quindi si può dire che dato in input un contesto dei tipi e un tipo questa funzione restituisce uno schema il quale non ha variabili di tipo libere.
+                                                                                  *)
+
+
+end;(*TypeEnv*)
+
+
+########################################
+
+
+LAMBDA.SML
+
+
+
+
+signature EXPRESSION                                        :                   (*
+	                                                                                le espressioni del nostro linguaggio sono
+		                                                                                - booleani
+		                                                                                - interi
+		                                                                                - uguaglianze su due espressioni, da capire se utile oltre al let, oppure come assegnamento
+		                                                                                - concatenazioni, rappresentate da coppie, cioè la prima espressione concatenata alla seconda, 
+			                                                                                che a sua volta	puo essere una concatenazione o una lista o un altro termine, l'espressione può 
+			                                                                                essere eterogenea, ma poi non è tipabile
+		                                                                                - lista, è una lista di espressioni, eterogenea (in questo caso poi non sarebbe comunque tipabile),
+			                                                                                che dall'evaluator poi viene converita in una sequenza di concatenazioni
+		                                                                                - ## il let, da capire se serve
+		                                                                                - ## la dichiarazione di rec, da sistemare
+		                                                                                - identificatori, cioè stringhe
+		                                                                                - lambda astrazioni, cioè stringa, argomento dell'astrazione, e espressione corpo dell'astrazione
+		                                                                                - applicazioni, coppia di espressioni
+		
+		                                                                                prExp, converte una espressione in una stringa del nostro linguaggio
+                                                                                *)
+
+
+
+#############################################
+
+
+EVAL.SML
+
+
+
+functor Evaluator                                           :                   (*
+	                                                                                funtore che ritorna l'evaluator, prende le strutture dei valori, degli ambienti e delle espressioni
+		                                                                                - ha una sola funzione evaluate che prende un'espressione e ritorna un valore,
+			                                                                                effettua valutazione eager statica
+			                                                                                - questa chiama una funzione locale evaluate con argomenti l'espressione e un ambiente vuoto
+		                                                                                - la funzione locale evaluate, funziona per casi su tutte le possibili espressioni
+			                                                                                - casi base:
+				                                                                                - espressioni booleane e intere, ritornano risprettivamente NUMBERvalue e BOOLvalue, chiamando
+					                                                                                rispettivamente mkValueNumber e mkValueBool
+			                                                                                - uguaglianza, quindi coppia di espressioni, le valuta entrambe, chiama eqValue, 
+				                                                                                per effettuare il confronto dei valori ottenuti, e costruisce il BOOLvalue corrispondente
+			                                                                                - if cond then ex1 else ex2, valuta cond, se è true, valuta ex1 altrimenti valuta ex2
+			                                                                                - cons, valuta i due termini, e ritorna un cons che rappresenta una concatenzione dei due valori
+				                                                                                ottenuti (non una lista)
+			                                                                                - lista
+				                                                                                - vuota, quindi ValueNil
+				                                                                                - viene convertita in una concatenzione (cons), valutandone da testa a coda tutti glie elementi
+			                                                                                - ## let, da verificare
+			                                                                                - ## rec, da verificare
+			                                                                                - variabile, valuta la variabile nell'ambiente associato
+			                                                                                - applicazione:
+				                                                                                - valuta entrambe le espressioni
+				                                                                                - "spacchetta" la prima espressione, che deve essere una chiusura (id, exp, env1, env2), 
+					                                                                                quindi ...
+				
+				                                                                                - aggiunge la coppia (id, valore della seconda espressione) nell'ambiente
+				                                                                                - valuta exp nel nuovo ambiente
+				
+			                                                                                - astrazione, argomento e, corpo exp, nell'ambiente E, crea una chiusura, quadrupla
+				                                                                                (e, exp, E, E') , dove E' è un ambiente vuoto ...
+		
+                                                                                *) 
+
+
+
+
+
+end;(*Evaluator*)
+
+
+
+
+###########################################
+
+
+
+PARSER.SML
+
+
+
+
+
+
+fun ParseExpr(TokOPENBR :: rest): Expression * Token list           :           	(*
+		                                                                                  ParseExpr effettua il parsing della token list, quindi scandisce la lista di token dalla testa 
+		                                                                                  alla coda
+		                                                                                  - Parentesi tonda aperta:
+			                                                                                chiama ParseExpr sul resto della token list:
+                                                                                              -> se incontra una parentesi tonda chiusa (eventualmente ci sono altre chiamate a funzione prima di entrare in questo caso), allora 
+                                                                                                 chiama ParseExprTail con argomenti un'espressione E e il resto della token list.
+                                                                                              -> altrimenti non c'è niente dopo la parentesi aperta, quindi alza un'eccezione.
+                                                                                          - I casi number, nil, true, ident e opensq immediatamente seguito da colsesq sono semplici.
+                                                                                          - Parentesi quadra aperta (opensq):
+                                                                                            chiama ParseList sul resto della token list:
+                                                                                              -> se incontra una parentesi quadra chiusa (come nel caso della tonda, possono esserci altre chiamate), allora chiama ParseExprTail
+                                                                                                 con argomenti la lista delle espressioni Es e il resto della lista dei token.
+                                                                                              -> altrimenti non c'è niente dopo la parentesi aperta, quindi alza un'eccezione.
+                                                                                          - Let formattato correttamente (seguito da nome di variabile, uguale e resto della lista dei token):
+                                                                                            Chiama ParseExpr sul resto della lista dei token:
+                                                                                              -> se incontra un in, allora richiama come al solito ParseExpr sul resto della lista dei token, altrimenti alza un'eccezione.
+                                                                                              -> se incontra un end (come sempre, possono esserci altre chiamate a funzione), allora chiama ParseExpreTail con argomenti il nome 
+                                                                                                 della variabile (ident) seguito dalle due espressioni (binding e scope) e il resto della lista dei token, altrimenti alza 
+                                                                                                 un'eccezione.
+                                                                                              -> altrimenti il let non è correttamente formattato, quindi alza un'eccezione.
+                                                                                          - If:
+                                                                                            chiama parseExpr sul resto della lista dei token. Il modo di operare è lo stesso dei casi precedenti, controlla che gli annidamenti siano rispettati. In particolare il caso della lettura del token else porta alla chiamata di ParseExprTail con argomenti l'espressione a sua volta costituita dalla terna di espressioni l'if-then-else ed il resto della lista di token, come secondo arogmento. Da notare che sia il then che l'else sono obbligatori, altrimenti viene alzata un'eccezione.
+                                                                                          - Fn:
+                                                                                            Deve essere correttamente formattato (come fn x => M). Ident rappresenta il nome del parametro, x nel nostro esempio, mentre body (vedere il codice qui sotto) rappresenta l'espressione che segue la freccia =>. Viene richiamata ParseExprTail con argomenti l'espressione costituita da x ed M (nel nostro esempio) ed il resto della lista dei token.
+                                                                                          - Altrimenti, alza un'eccezione (junk).
+	                                                                                 *)
+
+
+
+
+
+and ParseExprTail(E, TokEQUALS :: tail)                             :                  (*
+                                                                                          Input: un'espressione (E) e una lista di token
+                                                                                          Output: coppia contenente un'espressione e una lista di token.
+                                                                                          - se la lista di token inizia con =, allora chiama ParseExpr con argomento la lista restante di token, senza il token in testa, e richiama ParseExprTail con argomenti l'espressione (coppia di espressioni) EQexpr(E,E') ed il resto della lista di token.
+                                                                                          - se la lista di token inizia con l'operatore ::, il caso è analogo al precedente.
+                                                                                          - se la lista di token inizia con una parentesi tonda aperta, allora chiama ParseExpr (in modo analogo a quanto visto prima) e 
+                                                                                            controlla che vi sarà la corrispondente parentesi tonda chiusa, per poi richiamare ParseExprTail con argomenti l'applicazione APPLexpr(E,E') e il resto della lista di token. In caso contrario alza un'eccezione.
+                                                                                          - altrimenti ritorna l'input invariato.
+                                                                                          NOTA: le funzioni ParseExpr e ParseExprTail sono mutuamente ricorsive e, tramite chiamate reciproche, permettono di valutare la corretta formattazione del testo e di identificare i vari costrutti del linguaggio, come if-then-else, il let, l'applicazione, ecc.
+                                                                                       *)
+
+
+
+and ParseList(tokens)                                               :                  (*
+                                                                                          Input: lista di token (tokens)
+                                                                                          Output: coppia contenente una lista di espressioni e una lista di token
+                                                                                          Chiama ParseExpr su tokens e controlla il risultato, che è una coppia contenente un'espressione e una lista di token:
+                                                                                          - se la lista di token inizia con una virgola, allora richiama ParseList sulla lista restante privata della virgola iniziale e 
+                                                                                            ritorna una coppia contenente la lista delle espressioni parsate (rispettando l'ordine iniziale) e la restante lista di token
+                                                                                          - altrimenti ritorna una coppia che ha come primo elemento la lista contenente E e come secondo elemento la restante lista di token.
+                                                                                       *)
+
+
+
+fun parse(input)                                                    :                  (*
+			                                                                                - riceve una stringa in input
+			                                                                                - chiama il lexer su input, e ottiene una lista di stringhe
+			                                                                                - usa map che applica MakeToken a ogni stringa della lista, e ottiene la lista di token
+			                                                                                - applica ParseExpr alla lista di token, e ottiene una coppia (Expression, list)
+				                                                                                - se la lista è vuota, allora ritorna l'expression
+				                                                                                - altrimenti lancia un'eccezione
+                                                                                 		*)
+
+
+
+
+
+
+######################################
+
+
+
+LEXER.SML
+
+
+
+
+fun lex(accum, this :: (rest : char list))                          :                   (*
+		                                                                                    lex è il nostro lexer, prende una stringa accum e una lista di caratteri, sia this la testa della lista
+			                                                                                    - parse per prima cosa chiama lex("", explode input), cioè trasforma il termine passato in 
+				                                                                                    input in una lista di caratteri
+			                                                                                    - lex scorre dalla testa alla coda la lista di caratteri e usa accum per 'accumulare' un token
+			                                                                                    - ritorna la lista di token
+			                                                                                    - la funzione opera per casi:
+				                                                                                    - se il carattere 'this' in testa alla lista è uno spazio
+					                                                                                    allora se la parola accumulata è vuota, chiama lex sul resto della lista
+					                                                                                    altrimenti inserisce la parola accumulata il testa alla lista e chiama lex con
+						                                                                                    un primo argomento stringa vuota
+				                                                                                    - se accum è vuoto allora, chiama lex con la stringa this
+				                                                                                    - se accum è alphaNum e this è punteggiatura, o vicevera, allora aggiunge accum alla lista
+					                                                                                    e chiama lex con argomento this
+				                                                                                    - se accum o this sono simbolici, allora aggiunge accum alla lista e chiama lex con this
+				                                                                                    - altrimenti concatena accum e this, e chiama lex con questa nuova stringa
+			                                                                                    - il caso base di lex viene raggiunto quando list diventa vuota, quindi aggiunge l'ultima stringa
+				                                                                                    accumulata, e ritornando dalle chiamate ricorsive le stringhe vengono aggiunte in testa
+		                                                                                 *)
+
+
+

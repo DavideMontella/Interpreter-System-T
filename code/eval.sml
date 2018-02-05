@@ -36,40 +36,7 @@ signature EVALUATOR =
       val evaluate: Exp.Expression -> Val.Value
    end;
                     
-(*
-	funtore che ritorna l'evaluator, prende le strutture dei valori, degli ambienti e delle espressioni
-		- ha una sola funzione evaluate che prende un'espressione e ritorna un valore,
-			effettua valutazione eager statica
-			- questa chiama una funzione locale evaluate con argomenti l'espressione e un ambiente vuoto
-		- la funzione locale evaluate, funziona per casi su tutte le possibili espressioni
-			- casi base:
-				- espressioni booleane e intere, ritornano risprettivamente NUMBERvalue e BOOLvalue, chiamando
-					rispettivamente mkValueNumber e mkValueBool
-			- uguaglianza, quindi coppia di espressioni, le valuta entrambe, chiama eqValue, 
-				per effettuare il confronto dei valori ottenuti, e costruisce il BOOLvalue corrispondente
-			- if cond then ex1 else ex2, valuta cond, se è true, valuta ex1 altrimenti valuta ex2
-			- cons, valuta i due termini, e ritorna un cons che rappresenta una concatenzione dei due valori
-				ottenuti (non una lista)
-			- lista
-				- vuota, quindi ValueNil
-				- viene convertita in una concatenzione (cons), valutandone da testa a coda tutti glie elementi
-			- ## let, da verificare
-			- ## rec, da verificare
-			- variabile, valuta la variabile nell'ambiente associato
-			- applicazione:
-				- valuta entrambe le espressioni
-				- "spacchetta" la prima espressione, che deve essere una chiusura (id, exp, env1, env2), 
-					quindi ...
-				
-				- aggiunge la coppia (id, valore della seconda espressione) nell'ambiente
-				- valuta exp nel nuovo ambiente
-				
-			- astrazione, argomento e, corpo exp, nell'ambiente E, crea una chiusura, quadrupla
-				(e, exp, E, E') , dove E' è un ambiente vuoto ...
-			
-				
-		
-*)                    
+                   
                     
 functor Evaluator
   (structure Expression: EXPRESSION
