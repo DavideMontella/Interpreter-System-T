@@ -317,13 +317,18 @@ struct
               S3 on new2, ok1 andalso ok2)
          end  handle Recover q=> Recovery.report q)
 	| Ex.SUCCexpr(e) =>  (case e of 
-			Ex.NUMBERexpr(s) => (let val (s,t,b) = (tc(TE,Ex.EQexpr (Ex.NUMBERexpr 20,e))) in (s,Ty.mkTypeInt(),b) end)
+			Ex.NUMBERexpr(s) => (let val (s,t,b) = 
+			(tc(TE,Ex.EQexpr (Ex.NUMBERexpr 20,e))) in (s,Ty.mkTypeInt(),b) end)
 		 |  Ex.IDENTexpr s =>  tc(TE,e)
 		| 	Ex.SUCCexpr(s) => tc(TE,e))
-		
+	
+	
+	| Ex.RECAPPLexpr(e1::e2::cd,e3) => (let val (s,t,b) = 
+			(tc(TE,Ex.EQexpr (Ex.LAMBDAexpr("x",Ex.LAMBDAexpr("y",Ex.IDENTexpr "x")),e2))) in (s,Ty.mkTypeInt(),b) end)
 
    )handle Unify.NotImplemented msg => raise NotImplemented msg
        
+	   (*Ty.mkTypeArrow(Ty.mkTypeTyvar(freshTyvar()) ,Ty.mkTypeTyvar(freshTyvar()))*)
   (*
     Input: un ambiente (TE) e due espressioni (e1 ed e2)
     Output: una terna (sostituzione, tipo, booleano)
