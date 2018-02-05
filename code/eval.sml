@@ -121,15 +121,15 @@ functor Evaluator
                         val E' = Env.declare(id,v1,E)
                      in evaluate(E', e2)
                     end
-     (*          | RECDECLexpr(f,e1,e2) => 
-                    let val v1 = evaluate(E, e1)
-                        val ? = unValueClos v1
-                        val Env0 = mkEnv(Env.declare(f,v1,Env.emptyEnv))
-                        val recE0 = Rec Env0
-                        val newE = Env.plus(E, unEnv recE0)
-                     in evaluate(newE,e2)
-                    end
-	*)
+               | RECAPPLexpr(m::n::e1,e2) => 
+               		let val arg = evaluate(E, e2)
+               		in
+						if unValueNumber(evaluate(E,m)) = unValueNumber(arg) then evaluate(E,m)
+						else evaluate(E, APPLexpr(
+										APPLexpr(n, RECAPPLexpr(m::n::e1, NUMBERexpr(unValueNumber(arg) -1)))
+										, NUMBERexpr(unValueNumber(arg) -1)
+									))
+					end
                | IDENTexpr id=> 
                     Env.retrieve(id,E)
                | APPLexpr(e1,e2)=> 
