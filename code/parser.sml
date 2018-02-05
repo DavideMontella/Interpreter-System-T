@@ -123,7 +123,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
 			| ParseExpr(TokREC :: TokOPENSQ :: rest) =	
 				let val (EsRec, TokCLOSESQ :: tail) = ParseList(rest)
 					val (ArgRec, tail') = ParseExpr(tail)
-				in ParseExprTail(RECAPPLexpr(EsRec,ArgRec), tail')
+				in ParseExprTail(RECexpr(EsRec,ArgRec), tail')
 				end
 		
 			| ParseExpr(TokIF :: rest) =

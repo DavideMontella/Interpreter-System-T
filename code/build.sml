@@ -2,7 +2,7 @@ use "interp.sml";
 
 structure List = List();
 
-structure Expression= Expression(structure List = List);
+structure Expression= Expression();
 
 structure Parser= Parser(Expression);
 

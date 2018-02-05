@@ -33,8 +33,6 @@ signature EVALUATOR =
       structure Exp: sig type Expression end
       structure Val: sig type Exp and Value end
             sharing type Val.Exp = Exp.Expression
-      exception Unimplemented
-      exception RuntimeError of string
       val evaluate: Exp.Expression -> Val.Value
    end;
                     
@@ -86,8 +84,6 @@ functor Evaluator
       structure Val= Value
       type Env = Val.Value Env.Environment
 
-      exception Unimplemented
-      exception RuntimeError of string
       local
          open Expression Value
          fun evaluate(E, exp) =
@@ -114,24 +110,16 @@ functor Evaluator
                      in mkValueCons(v1,v2)
                     end
                | LISTexpr [] => ValueNil
-               | LISTexpr (hd::tl)=> 
-                    evaluate(E, CONSexpr(hd, LISTexpr tl))
-               | DECLexpr(id,e1,e2) => 
-                    let val v1 = evaluate(E,e1)
-                        val E' = Env.declare(id,v1,E)
-                     in evaluate(E', e2)
-                    end
-               | RECAPPLexpr(m::n::e1,e2) => 
+               | LISTexpr (hd::tl)=> evaluate(E, CONSexpr(hd, LISTexpr tl))
+               | RECexpr(m::n::e1,e2) => 
                		let val arg = evaluate(E, e2)
                		in
 						if 0 = unValueNumber(arg) then evaluate(E,m)
-						else evaluate(E, APPLexpr(
-										APPLexpr(n, RECAPPLexpr(m::n::e1, NUMBERexpr(unValueNumber(arg) -1)))
-										, NUMBERexpr(unValueNumber(arg) -1)
-									))
+						else evaluate(E, APPLexpr( APPLexpr(n, 
+										RECexpr(m::n::e1, NUMBERexpr(unValueNumber(arg)-1))),
+										NUMBERexpr(unValueNumber(arg)-1)))
 					end
-               | IDENTexpr id=> 
-                    Env.retrieve(id,E)
+               | IDENTexpr id=> Env.retrieve(id,E)
                | APPLexpr(e1,e2)=> 
                    let val v1 = evaluate(E,e1)
                        val v2 = evaluate(E,e2)
@@ -139,11 +127,8 @@ functor Evaluator
                        val recE'= Env.plus(unEnv Env', unEnv(Rec Env''))
                     in evaluate(Env.declare(id',v2,recE'), exp')
                    end
-               | LAMBDAexpr(x,e) => 
-                   mkValueClos(x,e,mkEnv E, mkEnv Env.emptyEnv)
+               | LAMBDAexpr(x,e) => mkValueClos(x,e,mkEnv E, mkEnv Env.emptyEnv)
                    
-
-
       in
          val evaluate = fn(e) => evaluate(Env.emptyEnv,e)
       end

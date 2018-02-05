@@ -28,15 +28,11 @@ signature EXPRESSION =
          SUCCexpr of Expression |
          CONSexpr of Expression * Expression   |
          LISTexpr of Expression list   |
-         DECLexpr of string * Expression * Expression   |
-         RECAPPLexpr of Expression list * Expression |
+         RECexpr of Expression list * Expression |
          IDENTexpr of string   |
          LAMBDAexpr of string * Expression   |
          APPLexpr of Expression * Expression   |
          NUMBERexpr of int
-
-
-      val prExp: int -> Expression -> string 
    end;
    
 signature ENVIRONMENT =
@@ -57,7 +53,7 @@ signature ENVIRONMENT =
 
    end;   
 
-functor Expression(structure List: LISTUTIL): EXPRESSION =
+functor Expression(): EXPRESSION =
    struct
       type 'a pair = 'a * 'a
 
@@ -68,53 +64,11 @@ functor Expression(structure List: LISTUTIL): EXPRESSION =
          SUCCexpr of Expression |
          CONSexpr of Expression pair   |
          LISTexpr of Expression list   |
-         DECLexpr of string * Expression * Expression   |
-         RECAPPLexpr of Expression list * Expression |
+         RECexpr of Expression list * Expression |
          IDENTexpr of string   |
          LAMBDAexpr of string * Expression   |
          APPLexpr of Expression * Expression   |
          NUMBERexpr of int
-	(*
-		Prende un termine del linguaggio in input e lo restituisce sottoforma di stringa.
-	*)
-      fun pr(BOOLexpr true) = " true"
-        | pr(BOOLexpr false) = " false"
-        | pr(EQexpr p) = printPair "=" p
-        | pr(CONDexpr(e1,e2,e3))=
-           " if" ^ pr(e1) ^ " then" ^ pr(e2) ^
-           " else" ^ pr(e3)
-        | pr(SUCCexpr exp) = "succ " ^ pr(exp)
-        | pr(CONSexpr p) = printPair "::" p
-        | pr(LISTexpr l) = prList l
-        | pr(DECLexpr(f,e1,e2))=
-           " let " ^ f ^ "=" ^ pr(e1) ^
-           " in" ^ pr e2 ^ " end"
-        | pr(RECAPPLexpr(ex2, ex3)) = 
-        	"rec ( "
-        | pr(IDENTexpr f)= " " ^ f
-        | pr(LAMBDAexpr(x,e))= " fn " ^ x ^ "=>" ^ pr(e)
-        | pr(APPLexpr(e1,e2))= pr e1 ^ pr e2
-        | pr(NUMBERexpr i)= " " ^ Int.toString(i)
-      and printPair operator (e1,e2) = pr e1 ^ " " ^ operator ^
-            pr e2
-      and prList l = "[" ^ prList' l ^ "]"
-      and prList' [] = ""
-        | prList' [e] = pr e
-        | prList'(hd::tl)= pr hd ^ "," ^ prList' tl
-
-
-      fun prExp n e =
-          let val s = pr e
-              val ze = size s
-           in if ze <= n then s
-              else
-                 let val slist = explode s
-                     val half = (n-3)div 2
-                     val initial = List.prefix(slist,half)
-                     val final = rev(List.prefix(rev slist,half))
-                  in implode(initial @ (explode "...") @ final)
-                 end
-          end
    end;
 
 functor Environment():ENVIRONMENT =
