@@ -142,6 +142,15 @@ functor Parser(Expression:EXPRESSION): PARSER =
 					| (_, tail) => raise SyntaxError(tail)
 				)   
 			
+			| ParseExpr(TokREC :: TokOPENSQ :: rest) =	
+				(case ParseList(rest) of
+					(EsRec, TokCLOSESQ :: tail) => 
+						let val (ArgRec, tail') = ParseExpr(tail)
+						in ParseExprTail(RECAPPLexpr(EsRec,ArgRec), tail')
+						end
+					| (_, tail) => raise SyntaxError(tail)
+				)
+
 			| ParseExpr(TokLET :: TokIDENT(ident) :: TokEQUALS :: rest) =
 				(case ParseExpr(rest) of
 					(binding, TokIN :: tail) =>

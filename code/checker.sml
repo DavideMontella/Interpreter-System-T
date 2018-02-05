@@ -277,7 +277,7 @@ struct
              val (S2,t2,ok2) = tc(TyEnv.declare(x,typeScheme,S1 onTE TE), e2)
           in (S2 oo S1, t2, ok1 andalso ok2)
          end
-    | Ex.RECDECLexpr(fid,e1,e2)=>
+ (*   | Ex.RECDECLexpr(fid,e1,e2)=>
          let val new = Ty.mkTypeScheme([],
                          Ty.mkTypeTyvar(Ty.freshTyvar()))
              val TE' = TyEnv.declare(fid,new,TE)
@@ -285,7 +285,7 @@ struct
              val (S2,t2, ok2) = tc(S1 onTE TE', e2)
           in
              (S2 oo S1, t2, ok1 andalso ok2)
-         end
+         end *)
     | Ex.IDENTexpr x   => 
          ((Ty.Id, Ty.instance(TyEnv.retrieve(x,TE)), true)
          handle TyEnv.Retrieve _=> 
@@ -318,8 +318,8 @@ struct
          end  handle Recover q=> Recovery.report q)
 	| Ex.SUCCexpr(e) =>  (case e of 
 			Ex.NUMBERexpr(s) => (let val (s,t,b) = (tc(TE,Ex.EQexpr (Ex.NUMBERexpr 20,e))) in (s,Ty.mkTypeInt(),b) end)
-						 |  Ex.IDENTexpr s =>  tc(TE,e)
-						 | 	Ex.SUCCexpr(s) => tc(TE,e))
+		 |  Ex.IDENTexpr s =>  tc(TE,e)
+		| 	Ex.SUCCexpr(s) => tc(TE,e))
 		
 
    )handle Unify.NotImplemented msg => raise NotImplemented msg

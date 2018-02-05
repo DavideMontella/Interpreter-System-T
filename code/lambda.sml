@@ -29,7 +29,7 @@ signature EXPRESSION =
          CONSexpr of Expression * Expression   |
          LISTexpr of Expression list   |
          DECLexpr of string * Expression * Expression   |
-         RECDECLexpr of string * Expression * Expression   |
+         RECAPPLexpr of Expression list * Expression |
          IDENTexpr of string   |
          LAMBDAexpr of string * Expression   |
          APPLexpr of Expression * Expression   |
@@ -69,7 +69,7 @@ functor Expression(structure List: LISTUTIL): EXPRESSION =
          CONSexpr of Expression pair   |
          LISTexpr of Expression list   |
          DECLexpr of string * Expression * Expression   |
-         RECDECLexpr of string * Expression * Expression   |
+         RECAPPLexpr of Expression list * Expression |
          IDENTexpr of string   |
          LAMBDAexpr of string * Expression   |
          APPLexpr of Expression * Expression   |
@@ -89,9 +89,8 @@ functor Expression(structure List: LISTUTIL): EXPRESSION =
         | pr(DECLexpr(f,e1,e2))=
            " let " ^ f ^ "=" ^ pr(e1) ^
            " in" ^ pr e2 ^ " end"
-        | pr(RECDECLexpr(f,e1,e2))=
-           " let rec " ^ f ^ "=" ^ pr(e1) ^
-           " in" ^ pr e2 ^ " end"
+        | pr(RECAPPLexpr(ex2, ex3)) = 
+        	"rec ( "
         | pr(IDENTexpr f)= " " ^ f
         | pr(LAMBDAexpr(x,e))= " fn " ^ x ^ "=>" ^ pr(e)
         | pr(APPLexpr(e1,e2))= pr e1 ^ pr e2
