@@ -124,7 +124,7 @@ functor Evaluator
                | RECAPPLexpr(m::n::e1,e2) => 
                		let val arg = evaluate(E, e2)
                		in
-						if unValueNumber(evaluate(E,m)) = unValueNumber(arg) then evaluate(E,m)
+						if 0 = unValueNumber(arg) then evaluate(E,m)
 						else evaluate(E, APPLexpr(
 										APPLexpr(n, RECAPPLexpr(m::n::e1, NUMBERexpr(unValueNumber(arg) -1)))
 										, NUMBERexpr(unValueNumber(arg) -1)
