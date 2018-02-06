@@ -39,8 +39,6 @@ functor Parser(Expression:EXPRESSION): PARSER =
 
 		exception SyntaxErr of string
 	
-		(* Parser *)	
-	
     (*
       Input: una stringa (s)
       Output: un booleano
@@ -73,8 +71,6 @@ functor Parser(Expression:EXPRESSION): PARSER =
 			| MakeToken(s) = if IsNumber(s) then TokNUMBER(valOf (Int.fromString(s)))
 							else if IsIdent(s) then TokIDENT(s)
 							else raise SyntaxErr(s)
-
-
 		
 		fun ParseExpr(TokOPENBR :: rest): Expression * Token list =
 				let val (E, TokCLOSEBR :: tail) = ParseExpr(rest)
@@ -112,7 +108,6 @@ functor Parser(Expression:EXPRESSION): PARSER =
 				in  ParseExprTail(LAMBDAexpr(ident, body), tail)
 				end
 
-
 		and ParseExprTail(E, TokEQUALS :: tail) =
 				let val (E', tail') = ParseExpr(tail)
 				in  ParseExprTail(EQexpr(E, E'), tail')
@@ -124,7 +119,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
        			end
 
 			| ParseExprTail(E, tail) = (E, tail)
-       
+
 
 		and ParseList(tokens) =
 			(case ParseExpr(tokens) of
@@ -134,8 +129,7 @@ functor Parser(Expression:EXPRESSION): PARSER =
 					end
 				| (E, tail) => ([E], tail)
 			)
-
-
+			
 		fun parse(input) =
 			let val LexStrings = Lexer.lex("", explode input)
 				val (E, nil) = ParseExpr(map MakeToken LexStrings)

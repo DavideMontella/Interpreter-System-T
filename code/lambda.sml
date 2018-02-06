@@ -7,8 +7,6 @@ signature EXPRESSION =
          EQexpr of Expression * Expression   |
          CONDexpr of Expression * Expression * Expression   |
          SUCCexpr of Expression |
-         CONSexpr of Expression * Expression   |
-         LISTexpr of Expression list   |
          RECexpr of Expression list * Expression |
          IDENTexpr of string   |
          LAMBDAexpr of string * Expression   |
@@ -43,8 +41,6 @@ functor Expression(): EXPRESSION =
          EQexpr of Expression pair   |
          CONDexpr of Expression * Expression * Expression   |
          SUCCexpr of Expression |
-         CONSexpr of Expression pair   |
-         LISTexpr of Expression list   |
          RECexpr of Expression list * Expression |
          IDENTexpr of string   |
          LAMBDAexpr of string * Expression   |

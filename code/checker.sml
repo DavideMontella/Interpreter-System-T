@@ -1,6 +1,5 @@
 use "lambda.sml";
 
-                  (* type checking *)
 signature TYPE =
    sig
       eqtype tyvar
