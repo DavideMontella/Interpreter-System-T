@@ -75,7 +75,86 @@ signature UNIFY=
       val unify: Type.Type * Type.Type -> Type.subst
    end;
 
-
+functor TypeCheckerRecovery(structure Ex: EXPRESSION	
+                            structure Ty: TYPE	
+                            structure List: LISTUTIL): 	
+  sig 	
+   val report: Ex.Expression * int * Ty.subst * string list ->	
+               Ty.subst * Ty.Type * bool	
+  end=	
+	
+struct	
+  exception Recovery of int	
+  val messages= [	
+(1, fn[t2]=> 	
+"expected the second operand to cons to be of list type" ^	
+"\n   found :   " ^  t2	
+|        _ => raise Recovery 1),	
+	
+(2, fn[t1,t2]=>	
+"the type of the first list element differs from the type of the others " ^	
+"\n   first element  :   " ^  t1 ^	
+"\n   other elements :   " ^  t2	
+|        _ => raise Recovery 2),	
+	
+(3, fn[t1,t2]=>	
+"left and right hand sides of = have different types" ^	
+"\n  left-hand side  :  " ^  t1 ^	
+"\n  right-hand side :  " ^  t2	
+|        _ => raise Recovery 3),	
+	
+(4, fn[t1]=>	
+"expected boolean expression between `if' and `then';" ^	
+"\n  found:  " ^  t1	
+|        _ => raise Recovery 4),	
+	
+(5, fn[t2,t3]=>	
+"`then' and `else' branches have different types" ^	
+"\n  `then' branch :  " ^  t2 ^	
+"\n  `else' branch :  " ^  t3	
+|        _ => raise Recovery 5),	
+	
+(6, fn[t1,t2]=>	
+"the domain type of the function differs from the type of the argument " ^	
+"\nto which it is applied" ^	
+"\n  function domain type : " ^  t1 ^	
+"\n  argument        type : " ^  t2	
+|        _ => raise Recovery 6),	
+	
+(7, fn[t1]=>	
+"I expected this expression, which is an argument " ^	
+"\nto a numeric operator, to have type int; but I " ^	
+"\nfound : " ^  t1	
+|        _ => raise Recovery 7),	
+	
+(8, fn [x] =>	
+"the identifier " ^ x ^ " has not been declared"	
+|        _ => raise Recovery 8),	
+	
+(9, fn [t] =>	
+"although the above expression occurs in " ^	
+"\napplication position, I have found it to " ^	
+"\nhave type :  " ^ t	
+|        _ => raise Recovery 9)	
+	
+	
+	
+]	
+	
+  fun report(exp, i, S, stringlist) =	
+      let val msgf = List.lookup messages i	
+                    handle List.Lookup => raise Recovery(i)	
+          val sep = "\n----------------\n"	
+          val freshty = Ty.mkTypeTyvar (Ty.freshTyvar())	
+          val msg   = "Type Error in expression:\n   " ^ 	
+                      "\nClue: " ^  msgf stringlist ^ "\n"	
+  (*        val msg   = "Type Error in expression:\n   " ^ Ex.prExp 60 exp ^	
+                      "\nClue: " ^  msgf stringlist ^ "\n"	
+*)	
+       in sep ^ "\n" ^ msg;	
+          (S,freshty,false)	
+      end	
+end;
 
 
 functor TypeChecker
@@ -94,9 +173,12 @@ struct
 
   structure Exp = Ex
   structure Type = Ty
-
+  structure Recovery= TypeCheckerRecovery(	
+    structure Ex = Ex	
+    structure Ty = Ty	
+    structure List = List)
   exception NotImplemented of string;
-
+  exception Recover of Ex.Expression * int * Ty.subst * string list ;
   
 
   fun tc (TE: TyEnv.typeenv, exp: Ex.Expression): 
@@ -108,20 +190,30 @@ struct
        (let val (S1,t1,ok1) = tc(TE,e1)
             val (S2,t2,ok2) = tc(S1 onTE TE, e2)
             val S3 = Unify.unify(S2 on t1, t2)
+            		handle Unify.Unify=>
+            		raise Recover(exp, 3, (S2 oo S1), [Ty.prType (S2 on t1),
+            			Ty.prType t2])
          in (S3 oo S2 oo S1, Ty.mkTypeBool(), ok1 andalso ok2)
-        end)
+        end handle Recover q=> Recovery.report q)
     | Ex.CONDexpr(b,e1,e2)=> 
         (let val (S1,t1,ok1) = tc(TE,b)
              val S1' = Unify.unify(t1,Ty.mkTypeBool())
+	                    handle Unify.Unify=>	
+                       raise Recover(exp, 4, S1, [Ty.prType t1])
              val (S2,t2,ok2) = tc(S1 onTE TE, e1)
              val (S3,t3,ok3) = tc((S2 oo S1) onTE TE, e2)
              val S3' = Unify.unify(S3 on t2,t3)
+                       handle Unify.Unify=>	
+                       raise Recover(exp, 5, (S3 oo S2 oo S1' oo S1), 	
+                       [Ty.prType (S3 on t2), Ty.prType t3])             
           in (S3' oo S3 oo S2 oo S1' oo S1, 
               (S3' oo S3) on t2,
               ok1 andalso ok2 andalso ok3)
-         end)
+         end handle Recover q=> Recovery.report q)
     | Ex.IDENTexpr x   => 
-         ((Ty.Id, Ty.instance(TyEnv.retrieve(x,TE)), true))
+         ((Ty.Id, Ty.instance(TyEnv.retrieve(x,TE)), true)
+	         handle TyEnv.Retrieve _=> 	
+	          Recovery.report(exp,8,Ty.Id,[x]))         
     | Ex.LAMBDAexpr(x,e)=>
          let val newty = Ty.mkTypeTyvar(Ty.freshTyvar())
              val new_scheme = Ty.mkTypeScheme([], newty)
@@ -129,20 +221,24 @@ struct
              val (S1,t1,ok1) = tc(TE', e)
           in (S1, Ty.mkTypeArrow(S1 on newty,t1), ok1)
          end
-
     | Ex.APPLexpr(e1,e2)=>
         (let val (S1,t1,ok1) = tc(TE, e1)
              val new =  Ty.mkTypeTyvar(Ty.freshTyvar())
              val new' = Ty.mkTypeTyvar(Ty.freshTyvar())
              val arrow1=Ty.mkTypeArrow(new,new')
              val S1' = Unify.unify(arrow1,t1)
+                 handle Unify.Unify=>	
+                 raise Recover(e1,9,S1,[Ty.prType t1])
              val (S2,t2,ok2) = tc((S1' oo S1) onTE TE, e2)
              val new2 = Ty.mkTypeTyvar(Ty.freshTyvar())
              val arrow2 = Ty.mkTypeArrow(t2,new2) 
              val S3 = Unify.unify(arrow2, (S2 oo S1') on t1)
+                 handle Unify.Unify=> 	
+                 raise Recover(exp, 6, (S2 oo S1' oo S1 ), 	
+                    [Ty.prType ((S2 oo S1') on new),Ty.prType  t2])
           in (S3 oo S2 oo S1' oo S1,
               S3 on new2, ok1 andalso ok2)
-         end)
+         end handle Recover q=> Recovery.report q)
 	| Ex.SUCCexpr(e) =>  (case e of 
 			Ex.NUMBERexpr(s) => (let val (s,t,b) = 
 			(tc(TE,Ex.EQexpr (Ex.NUMBERexpr 20,e))) in (s,Ty.mkTypeInt(),b) end)
@@ -161,10 +257,14 @@ struct
   and checkIntBin(TE,e1,e2) =
    (let val (S1,t1,ok1) = tc(TE,e1)
         val S1'  = Unify.unify(t1, Ty.mkTypeInt())
+        		handle Unify.Unify=> 
+        		raise Recover(e1, 7, S1, [Ty.prType t1])
         val (S2,t2,ok2) = tc((S1' oo S1) onTE TE,e2)
         val S2' =  Unify.unify(t2, Ty.mkTypeInt())
+        			handle Unify.Unify=> 
+        			raise Recover(e2, 7, (S2 oo S1' oo S1), [Ty.prType t2])
      in (S2' oo S2 oo S1' oo S1, Ty.mkTypeInt(), ok1 andalso ok2)
-    end);
+    end  handle Recover q=> Recovery.report q)
 
 
 
