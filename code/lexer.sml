@@ -12,7 +12,7 @@ structure Lexer : LEXICAL =
 			Output: booleano
 			Restituisce true se sym è un carattere simbolico tra quelli definiti qui sotto.
 		*)
-		fun symbolic(sym) = List.exists (fn x => x = sym) ["(", ")", "[", "]", ",", "+", "-", "*"]
+		fun symbolic(sym) = List.exists (fn x => x = sym) ["(", ")", "[", "]", ",", "+", "*"]
 
 
 		fun lex(accum, this :: (rest : char list)) =

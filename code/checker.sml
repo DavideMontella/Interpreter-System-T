@@ -185,6 +185,8 @@ struct
    (case exp of
       Ex.BOOLexpr b => (Ty.Id,Ty.mkTypeBool(),true)
     | Ex.NUMBERexpr _ => (Ty.Id,Ty.mkTypeInt(),true)
+	| Ex.SUMexpr(e1,e2)  => checkIntBin(TE,e1,e2)
+    | Ex.PRODexpr(e1,e2) => checkIntBin(TE,e1,e2)
     | Ex.EQexpr(e1,e2)=> 
        (let val (S1,t1,ok1) = tc(TE,e1)
             val (S2,t2,ok2) = tc(S1 onTE TE, e2)

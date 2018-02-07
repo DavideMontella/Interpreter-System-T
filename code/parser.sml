@@ -20,6 +20,8 @@ functor Parser(Expression:EXPRESSION): PARSER =
 		open Lexer
 		
 		datatype Token = TokOPENBR   |
+						TokPLUS   |
+                        TokTIMES   |
 						TokSUCC |
 						TokCLOSEBR   |
 						TokTRUE   |
@@ -54,6 +56,8 @@ functor Parser(Expression:EXPRESSION): PARSER =
 		fun IsNumber(s) = not(List.exists (not o Char.isDigit) (explode s))
 
 		fun   MakeToken("(") = TokOPENBR
+			| MakeToken("+") = TokPLUS     
+			| MakeToken("*") = TokTIMES  
 			| MakeToken(")") = TokCLOSEBR
 			| MakeToken("true") = TokTRUE
 			| MakeToken("false") = TokFALSE
@@ -108,7 +112,17 @@ functor Parser(Expression:EXPRESSION): PARSER =
 				in  ParseExprTail(LAMBDAexpr(ident, body), tail)
 				end
 
-		and ParseExprTail(E, TokEQUALS :: tail) =
+		and ParseExprTail(E, TokPLUS :: tail) =
+                 let val (E', tail') = ParseExpr(tail)
+                 in  ParseExprTail(SUMexpr(E, E'), tail')
+                 end  
+      
+
+			| ParseExprTail(E, TokTIMES :: tail) =
+                 let val (E', tail') = ParseExpr(tail)
+                 in  ParseExprTail(PRODexpr(E, E'), tail')
+                 end   
+			| ParseExprTail(E, TokEQUALS :: tail) =
 				let val (E', tail') = ParseExpr(tail)
 				in  ParseExprTail(EQexpr(E, E'), tail')
 				end

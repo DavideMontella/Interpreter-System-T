@@ -54,6 +54,19 @@ functor Evaluator
             case exp
               of BOOLexpr b => mkValueBool b
                | NUMBERexpr i => mkValueNumber i
+			   | SUMexpr(e1, e2) =>
+                    let val e1' = evaluate(E, e1)
+                        val e2' = evaluate(E, e2)
+                    in
+                       mkValueNumber(unValueNumber e1' + unValueNumber e2')
+                    end
+			   | PRODexpr(e1, e2) =>
+                    let val e1' = evaluate(E, e1)
+                        val e2' = evaluate(E, e2)
+                    in
+                       mkValueNumber(unValueNumber e1' * unValueNumber e2')
+                    end
+
                | EQexpr(e1,e2)=> 
                     let val v1 = evaluate(E,e1)
                         val v2 = evaluate(E,e2)

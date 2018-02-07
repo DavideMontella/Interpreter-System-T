@@ -4,6 +4,8 @@ signature EXPRESSION =
    sig
       datatype Expression =
          BOOLexpr of bool   |
+		 SUMexpr of Expression * Expression   |
+         PRODexpr of Expression * Expression   |
          EQexpr of Expression * Expression   |
          CONDexpr of Expression * Expression * Expression   |
          SUCCexpr of Expression |
@@ -38,6 +40,8 @@ functor Expression(): EXPRESSION =
 
       datatype Expression =
          BOOLexpr of bool   |
+		 SUMexpr of Expression pair   |
+         PRODexpr of Expression pair   |
          EQexpr of Expression pair   |
          CONDexpr of Expression * Expression * Expression   |
          SUCCexpr of Expression |
